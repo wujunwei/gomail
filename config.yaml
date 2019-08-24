@@ -1,28 +1,27 @@
----
-dev:
-  host: localhost
-  port: 8080
-  name: Developer Setup
-  redis:
-    -
-      host: 127.0.0.1
-      port: 6379
-      name: key1
-    -
-      host: 127.0.0.1
-      port: 6379
-      name: key2
-  mail:
-    user: 1262193323@qq.com
-    pwd: kwjklcboqznsbabc
-    smtp:
-      host: smtp.qq.com
-      port: 587
-      ssl: True
-    imap:
-      host: imap.qq.com
-      port: 993
-      ssl: False
+
+host: localhost
+port: 8080
+name: Developer Setup
+redis:
+  -
+    host: 127.0.0.1
+    port: 6379
+    name: key1
+  -
+    host: 127.0.0.1
+    port: 6379
+    name: key2
+mail:
+  user: 1262193323@qq.com
+  pwd: kwjklcboqznsbabc
+  smtp:
+    host: smtp.qq.com
+    port: 587
+    ssl: True
+  imap:
+    host: imap.qq.com
+    port: 993
+    ssl: False
 
 #prod:
 #  host: localhost
