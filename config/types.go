@@ -1,15 +1,15 @@
 package config
 
 type Redis struct {
-	Host string `yaml:"host"`
-	Port uint16   `yaml:"port"`
-	Ssl  string `yaml:"ssl"`
+	Address string `yaml:"address"`
+	Name    string `yaml:"name"`
+	Network string `yaml:"network"`
 }
 
 type MailTp struct {
 	Host string `yaml:"host"`
-	Port uint16   `yaml:"port"`
-	Ssl  bool `yaml:"ssl"`
+	Port uint16 `yaml:"port"`
+	Ssl  bool   `yaml:"ssl"`
 }
 
 type Mail struct {
@@ -21,7 +21,7 @@ type Mail struct {
 
 type Config struct {
 	Host         string  `yaml:"host"`
-	Port         uint16    `yaml:"port"`
+	Port         uint16  `yaml:"port"`
 	Name         string  `yaml:"name"`
 	Mail         Mail    `yaml:"mail"`
 	RedisCluster []Redis `yaml:"redis"`
