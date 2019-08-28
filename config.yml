@@ -14,14 +14,8 @@ redis:
 mail:
   user: 1262193323@qq.com
   pwd: kwjklcboqznsbabc
-  smtp:
-    host: smtp.qq.com
-    port: 587
-    ssl: True
-  imap:
-    host: imap.qq.com
-    port: 993
-    ssl: False
+  smtp: smtp.qq.com:587
+  imap: imap.qq.com:993
 
 #prod:
 #  host: localhost

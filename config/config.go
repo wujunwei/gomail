@@ -5,13 +5,13 @@ import (
 	"io/ioutil"
 )
 
-func Load(path string) (conf Config, err error) {
-	data, err := ioutil.ReadFile(path)
+var MailConfig = Config{}
+
+func init() {
+	data, err := ioutil.ReadFile("../config.yml")
 	if err != nil {
 		return
 	}
-	err = yaml.Unmarshal(data, &conf)
-	return 
+	err = yaml.Unmarshal(data, &MailConfig)
+	return
 }
-
-
