@@ -5,12 +5,8 @@ import (
 	"net/http"
 )
 
-type MailHandle struct {
-	mailQueue <-chan MailTask
-}
-
 func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	_, _ = writer.Write([]byte("hahha"))
+	client, err := NewClient()
 	writer.WriteHeader(200)
 }
 

@@ -2,30 +2,53 @@
 
 
 [[projects]]
-  digest = "1:0594af97b2f4cec6554086eeace6597e20a4b69466eb4ada25adf9f4300dddd2"
+  name = "github.com/emersion/go-imap"
+  packages = [
+    ".",
+    "client",
+    "commands",
+    "responses",
+    "utf7"
+  ]
+  revision = "8c4bfb47d0cae8efd2cc8f13ec25b391cf2b7051"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/emersion/go-sasl"
+  packages = ["."]
+  revision = "240c8404624e076f633766c16adbe96c7ac516b7"
+
+[[projects]]
   name = "github.com/garyburd/redigo"
   packages = [
     "internal",
-    "redis",
+    "redis"
   ]
-  pruneopts = "UT"
   revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "github.com/go-yaml/yaml"
   packages = ["."]
-  pruneopts = "UT"
   revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
   version = "v2.2.2"
+
+[[projects]]
+  name = "golang.org/x/text"
+  packages = [
+    "encoding",
+    "encoding/internal/identifier",
+    "internal/gen",
+    "transform",
+    "unicode/cldr"
+  ]
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/garyburd/redigo/redis",
-    "github.com/go-yaml/yaml",
-  ]
+  inputs-digest = "96881ea3d890d0d7319fcb76a862e2d4ccf1a08a5129925a27e919494d8a4f3a"
   solver-name = "gps-cdcl"
   solver-version = 1
