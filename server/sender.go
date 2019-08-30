@@ -41,7 +41,7 @@ type MailClient struct {
 	io.Writer
 }
 
-func (mClient MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
+func (mClient *MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
 	header := ""
 	for key, value := range Header {
 		header += key + ":" + value + "\r\n"

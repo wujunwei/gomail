@@ -18,5 +18,6 @@ type Config struct {
 	Port         uint16  `yaml:"port"`
 	Name         string  `yaml:"name"`
 	Mail         Mail    `yaml:"mail"`
+	WorkNumber   int     `yaml:"workNumber"`
 	RedisCluster []Redis `yaml:"redis"`
 }
