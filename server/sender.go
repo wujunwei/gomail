@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	. "gomail/config"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/smtp"
@@ -37,11 +36,11 @@ type Client interface {
 }
 
 type MailClient struct {
-	smtp.Client
-	io.Writer
+	Auth smtp.Auth
+	Addr string
 }
 
-func (mClient *MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
+func (mClient MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
 	header := ""
 	for key, value := range Header {
 		header += key + ":" + value + "\r\n"
@@ -50,7 +49,7 @@ func (mClient *MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]s
 	buffer.WriteString(header)
 	return header
 }
-func (mClient *MailClient) writeFile(buffer *bytes.Buffer, fileName string) {
+func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName string) {
 	file, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		panic(err.Error())
@@ -65,7 +64,7 @@ func (mClient *MailClient) writeFile(buffer *bytes.Buffer, fileName string) {
 		}
 	}
 }
-func (mClient *MailClient) BuildStruct(task MailTask) *MailClient {
+func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	buffer := bytes.NewBuffer(nil)
 	boundary := "GoBoundary"
 	Header := make(map[string]string)
@@ -98,21 +97,18 @@ func (mClient *MailClient) BuildStruct(task MailTask) *MailClient {
 	}
 
 	buffer.WriteString("\r\n--" + boundary + "--")
-	return mClient
+	return buffer
 }
 
-func (mClient *MailClient) Send(task MailTask) (err error) {
-	err = mClient.BuildStruct(task).Mail(task.from)
+func (mClient MailClient) Send(task MailTask) (err error) {
+	buffer := mClient.BuildStruct(task)
+	err = smtp.SendMail(mClient.Addr, mClient.Auth, task.from, task.to, buffer.Bytes())
 	return
 }
 
 func NewClient() (MailSender MailClient, err error) {
-	MailSender.Client = smtp.Client{}
 	//auth
-	err = MailSender.Auth(smtp.PlainAuth("", MailConfig.Mail.User, MailConfig.Mail.Password, MailConfig.Mail.Smtp))
-	if err != nil {
-		return
-	}
-	MailSender.Writer, err = MailSender.Data()
+	MailSender.Addr = MailConfig.Mail.Smtp
+	MailSender.Auth = smtp.PlainAuth("", MailConfig.Mail.User, MailConfig.Mail.Password, strings.Split(MailConfig.Mail.Smtp, ":")[0])
 	return
 }

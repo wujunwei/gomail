@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type Redis struct {
 	Address string `yaml:"address"`
 	Name    string `yaml:"name"`
@@ -14,10 +16,11 @@ type Mail struct {
 }
 
 type Config struct {
-	Host         string  `yaml:"host"`
-	Port         uint16  `yaml:"port"`
-	Name         string  `yaml:"name"`
-	Mail         Mail    `yaml:"mail"`
-	WorkNumber   int     `yaml:"workNumber"`
-	RedisCluster []Redis `yaml:"redis"`
+	Host         string        `yaml:"host"`
+	Port         string        `yaml:"port"`
+	Name         string        `yaml:"name"`
+	Mail         Mail          `yaml:"mail"`
+	WorkNumber   int           `yaml:"workNumber"`
+	RedisCluster []Redis       `yaml:"redis"`
+	Timeout      time.Duration `yaml:"timeout"`
 }

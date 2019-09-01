@@ -1,8 +1,9 @@
 
-host: localhost
+host: 127.0.0.1
 port: 8080
 name: Developer Setup
 workNumber: 10
+timeout: 1800
 redis:
   -
     host: 127.0.0.1:6379
