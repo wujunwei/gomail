@@ -12,21 +12,21 @@ import (
 )
 
 type MailTask struct {
-	from          string
-	to            []string
-	cc            []string
-	bcc           []string
-	subject       string
-	LastMessageId string
-	body          string
-	contentType   string
-	attachment    Attachment
+	From          string     `json:"from"`
+	To            []string   `json:"to"`
+	Cc            []string   `json:"cc"`
+	Bcc           []string   `json:"bcc"`
+	Subject       string     `json:"subject"`
+	LastMessageId string     `json:"last_message_id"`
+	Body          string     `json:"body"`
+	ContentType   string     `json:"content_type"`
+	Attachment    Attachment `json:"attachment"`
 }
 
 type Attachment struct {
-	name        string
-	contentType string
-	withFile    bool
+	Name        string `json:"name"`
+	ContentType string `json:"content_type"`
+	WithFile    bool   `json:"with_file"`
 }
 
 type Client interface {
@@ -68,32 +68,32 @@ func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	buffer := bytes.NewBuffer(nil)
 	boundary := "GoBoundary"
 	Header := make(map[string]string)
-	Header["From"] = task.from
-	Header["To"] = strings.Join(task.to, ";")
-	Header["Cc"] = strings.Join(task.cc, ";")
-	Header["Bcc"] = strings.Join(task.bcc, ";")
-	Header["Subject"] = task.subject
+	Header["From"] = task.From
+	Header["To"] = strings.Join(task.To, ";")
+	Header["Cc"] = strings.Join(task.Cc, ";")
+	Header["Bcc"] = strings.Join(task.Bcc, ";")
+	Header["Subject"] = task.Subject
 	Header["Content-Type"] = "multipart/mixed;boundary=" + boundary
 	Header["Mime-Version"] = "1.0"
 	Header["Date"] = time.Now().String()
 	mClient.writeHeader(buffer, Header)
 	body := "\r\n--" + boundary + "\r\n"
-	body += "Content-Type:" + task.contentType + "\r\n"
-	body += "\r\n" + task.body + "\r\n"
+	body += "Content-Type:" + task.ContentType + "\r\n"
+	body += "\r\n" + task.Body + "\r\n"
 	buffer.WriteString(body)
 
-	if task.attachment.withFile {
+	if task.Attachment.WithFile {
 		attachment := "\r\n--" + boundary + "\r\n"
 		attachment += "Content-Transfer-Encoding:base64\r\n"
 		attachment += "Content-Disposition:attachment\r\n"
-		attachment += "Content-Type:" + task.attachment.contentType + ";name=\"" + task.attachment.name + "\"\r\n"
+		attachment += "Content-Type:" + task.Attachment.ContentType + ";name=\"" + task.Attachment.Name + "\"\r\n"
 		buffer.WriteString(attachment)
 		defer func() {
 			if err := recover(); err != nil {
 				log.Fatalln(err)
 			}
 		}()
-		mClient.writeFile(buffer, task.attachment.name)
+		mClient.writeFile(buffer, task.Attachment.Name)
 	}
 
 	buffer.WriteString("\r\n--" + boundary + "--")
@@ -102,7 +102,7 @@ func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 
 func (mClient MailClient) Send(task MailTask) (err error) {
 	buffer := mClient.BuildStruct(task)
-	err = smtp.SendMail(mClient.Addr, mClient.Auth, task.from, task.to, buffer.Bytes())
+	err = smtp.SendMail(mClient.Addr, mClient.Auth, task.From, task.To, buffer.Bytes())
 	return
 }
 

@@ -1,16 +1,16 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
 
 func Start(addr string) {
-	pool, err := NewPool()
+	client, err := NewClient()
 	if err == nil {
-		defer pool.Close()
-		http.Handle("/mail/send", &MailHandle{Pool: &pool})
-
+		http.Handle("/mail/send", &MailHandle{Client: client})
+		fmt.Print("start to listen :8080")
 		err = http.ListenAndServe(addr, nil)
 	}
 	if err != nil {

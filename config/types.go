@@ -16,11 +16,11 @@ type Mail struct {
 }
 
 type Config struct {
-	Host         string        `yaml:"host"`
-	Port         string        `yaml:"port"`
-	Name         string        `yaml:"name"`
-	Mail         Mail          `yaml:"mail"`
-	WorkNumber   int           `yaml:"workNumber"`
-	RedisCluster []Redis       `yaml:"redis"`
-	Timeout      time.Duration `yaml:"timeout"`
+	Host       string `yaml:"host"`
+	Port       string `yaml:"port"`
+	Name       string `yaml:"name"`
+	Mail       Mail   `yaml:"mail"`
+	WorkNumber int    `yaml:"workNumber"`
+	//RedisCluster []Redis       `yaml:"redis"`
+	Timeout time.Duration `yaml:"timeout"`
 }

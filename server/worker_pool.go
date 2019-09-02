@@ -51,7 +51,6 @@ func (pool *WorkerPool) Close() {
 
 func NewPool() (pool WorkerPool, err error) {
 	mailWorkers := make(chan *Worker, config.MailConfig.WorkNumber)
-	//fmt.Printf("%+v", config.MailConfig)
 	for i := 0; i < cap(mailWorkers); i++ {
 		client, _ := NewClient()
 		mailWorkers <- &Worker{Client: client, LastTime: time.Now()}

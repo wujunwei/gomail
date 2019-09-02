@@ -1,22 +1,32 @@
 package server
 
 import (
+	"encoding/json"
+	"gomail/server/response"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
 type MailHandle struct {
-	Pool Pool
+	Client MailClient
 }
 
 func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	//todo deal with json
-	err := mh.Pool.Get().Client.Send(MailTask{from: "1262193323@qq.com", to: []string{"wjw3323@live.com"}, subject: "test", body: "哈哈哈，我收到了"})
+	var jsonData []byte
+	var task = MailTask{}
+
+	jsonData, _ = ioutil.ReadAll(request.Body)
+	err := json.Unmarshal(jsonData, &task)
+	if err != nil {
+		log.Print(err)
+	}
+	err = mh.Client.Send(task)
 	//fmt.Println("end!")
 	if err != nil {
 		log.Print(err)
+		_, _ = writer.Write(response.Fail(1, "error"))
 	} else {
-		_, _ = writer.Write([]byte("hahaahha"))
-		writer.WriteHeader(200)
+		_, _ = writer.Write(response.Success(nil))
 	}
 }
