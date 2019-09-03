@@ -2,8 +2,11 @@ package server
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	. "gomail/config"
+	"gomail/server/random"
 	"io/ioutil"
 	"log"
 	"net/smtp"
@@ -12,15 +15,16 @@ import (
 )
 
 type MailTask struct {
-	From          string     `json:"from"`
-	To            []string   `json:"to"`
-	Cc            []string   `json:"cc"`
-	Bcc           []string   `json:"bcc"`
-	Subject       string     `json:"subject"`
-	LastMessageId string     `json:"last_message_id"`
-	Body          string     `json:"body"`
-	ContentType   string     `json:"content_type"`
-	Attachment    Attachment `json:"attachment"`
+	MessageId   string
+	From        string     `json:"from"`
+	To          []string   `json:"to"`
+	Cc          []string   `json:"cc"`
+	Bcc         []string   `json:"bcc"`
+	Subject     string     `json:"subject"`
+	ReplyId     string     `json:"reply_id"`
+	Body        string     `json:"body"`
+	ContentType string     `json:"content_type"`
+	Attachment  Attachment `json:"attachment"`
 }
 
 type Attachment struct {
@@ -36,8 +40,20 @@ type Client interface {
 }
 
 type MailClient struct {
-	Auth smtp.Auth
-	Addr string
+	HostName string
+	Auth     smtp.Auth
+	Addr     string
+}
+
+func (mClient MailClient) generatorMessageId() string {
+	randomByte, _ := random.Alpha(uint64(32))
+	hash := sha256.New()
+	hash.Write(randomByte)
+	randomStr := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+	randomStr = strings.ReplaceAll(randomStr, "=", "")
+	randomStr = strings.ReplaceAll(randomStr, "/", "")
+	randomStr = strings.ReplaceAll(randomStr, "+", "")
+	return fmt.Sprintf("<%s@%s>", randomStr, mClient.HostName)
 }
 
 func (mClient MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
@@ -73,6 +89,11 @@ func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	Header["Cc"] = strings.Join(task.Cc, ";")
 	Header["Bcc"] = strings.Join(task.Bcc, ";")
 	Header["Subject"] = task.Subject
+	if task.MessageId == "" {
+		task.MessageId = mClient.generatorMessageId()
+	}
+	Header["Message-Id"] = task.MessageId
+	Header["In-Reply-To"] = task.ReplyId
 	Header["Content-Type"] = "multipart/mixed;boundary=" + boundary
 	Header["Mime-Version"] = "1.0"
 	Header["Date"] = time.Now().String()
@@ -100,7 +121,9 @@ func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	return buffer
 }
 
-func (mClient MailClient) Send(task MailTask) (err error) {
+func (mClient MailClient) Send(task MailTask) (messageId string, err error) {
+	messageId = mClient.generatorMessageId()
+	task.MessageId = messageId
 	buffer := mClient.BuildStruct(task)
 	err = smtp.SendMail(mClient.Addr, mClient.Auth, task.From, task.To, buffer.Bytes())
 	return
@@ -108,6 +131,7 @@ func (mClient MailClient) Send(task MailTask) (err error) {
 
 func NewClient() (MailSender MailClient, err error) {
 	//auth
+	MailSender.HostName = MailConfig.Host
 	MailSender.Addr = MailConfig.Mail.Smtp
 	MailSender.Auth = smtp.PlainAuth("", MailConfig.Mail.User, MailConfig.Mail.Password, strings.Split(MailConfig.Mail.Smtp, ":")[0])
 	return

@@ -34,9 +34,5 @@
   version = "2.2.2"
 
 [[constraint]]
-  name = "github.com/garyburd/redigo"
-  version = "1.6.0"
-
-[[constraint]]
   name = "github.com/emersion/go-imap"
   version = "1.0.0"

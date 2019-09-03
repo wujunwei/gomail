@@ -2,12 +2,6 @@ package config
 
 import "time"
 
-type Redis struct {
-	Address string `yaml:"address"`
-	Name    string `yaml:"name"`
-	Network string `yaml:"network"`
-}
-
 type Mail struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"pwd"`
