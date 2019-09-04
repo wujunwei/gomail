@@ -1,6 +1,6 @@
-// The random package provides cryptographically secure random integers
+// The util package provides cryptographically secure util integers
 // and strings.
-package random
+package util
 
 import (
 	"crypto/rand"
@@ -9,7 +9,7 @@ import (
 	"math"
 )
 
-// Uint64Range returns a random 64-bit unsigned integer in the range [start, end].
+// Uint64Range returns a util 64-bit unsigned integer in the range [start, end].
 // An error is returned if start is greater than end.
 func Uint64Range(start, end uint64) (uint64, error) {
 	var val uint64
@@ -43,7 +43,7 @@ func Uint64Range(start, end uint64) (uint64, error) {
 	return val + start, nil
 }
 
-// Chars returns a random string of length n, which consists of the given
+// Chars returns a util string of length n, which consists of the given
 // character set. If the charset is empty or n is less than or equal to zero
 // then an empty string is returned.
 func Chars(charset string, n uint64) ([]byte, error) {
@@ -69,7 +69,7 @@ func Chars(charset string, n uint64) ([]byte, error) {
 	return b, nil
 }
 
-// Alpha returns a string of length n, which consists of random upper case and
+// Alpha returns a string of length n, which consists of util upper case and
 // lowercase characters. If n is less than or equal to zero then an empty
 // string is returned
 func Alpha(n uint64) ([]byte, error) {
@@ -78,7 +78,7 @@ func Alpha(n uint64) ([]byte, error) {
 	return Chars(charset, n)
 }
 
-// AlphaNum returns a string of length n, which consists of random uppercase,
+// AlphaNum returns a string of length n, which consists of util uppercase,
 // lowercase, and numeric characters. If n is zero then an empty string is
 // returned.
 func AlphaNum(n uint64) ([]byte, error) {
@@ -87,8 +87,8 @@ func AlphaNum(n uint64) ([]byte, error) {
 	return Chars(charset, n)
 }
 
-// Uint8 returns a random 8-bit unsigned integer. Return 0 and an error if
-// unable to get random data.
+// Uint8 returns a util 8-bit unsigned integer. Return 0 and an error if
+// unable to get util data.
 func Uint8() (uint8, error) {
 	var bytes [1]byte
 
@@ -100,8 +100,8 @@ func Uint8() (uint8, error) {
 	return bytes[0], nil
 }
 
-// Int8 returns a random 8-bit signed integer. Return 0 and an error if
-// unable to get random data.
+// Int8 returns a util 8-bit signed integer. Return 0 and an error if
+// unable to get util data.
 func Int8() (int8, error) {
 	i, err := Uint8()
 
@@ -112,8 +112,8 @@ func Int8() (int8, error) {
 	return int8(i), nil
 }
 
-// Uint16 returns a random 16-bit unsigned integer. Return 0 and an error if
-// unable to get random data.
+// Uint16 returns a util 16-bit unsigned integer. Return 0 and an error if
+// unable to get util data.
 func Uint16() (uint16, error) {
 	var bytes [2]byte
 
@@ -125,8 +125,8 @@ func Uint16() (uint16, error) {
 	return binary.LittleEndian.Uint16(bytes[:]), nil
 }
 
-// Int16 returns a random 16-bit signed integer. Return 0 and an error if
-// unable to get random data.
+// Int16 returns a util 16-bit signed integer. Return 0 and an error if
+// unable to get util data.
 func Int16() (int16, error) {
 	i, err := Uint16()
 
@@ -137,8 +137,8 @@ func Int16() (int16, error) {
 	return int16(i), nil
 }
 
-// Uint32 returns a random 32-bit unsigned integer. Return 0 and an error if
-// unable to get random data.
+// Uint32 returns a util 32-bit unsigned integer. Return 0 and an error if
+// unable to get util data.
 func Uint32() (uint32, error) {
 	var bytes [4]byte
 
@@ -150,8 +150,8 @@ func Uint32() (uint32, error) {
 	return binary.LittleEndian.Uint32(bytes[:]), nil
 }
 
-// Int32 returns a random 32-bit signed integer. Return 0 and an error if
-// unable to get random data.
+// Int32 returns a util 32-bit signed integer. Return 0 and an error if
+// unable to get util data.
 func Int32() (int32, error) {
 	i, err := Uint32()
 
@@ -162,8 +162,8 @@ func Int32() (int32, error) {
 	return int32(i), nil
 }
 
-// Uint64 returns a random 64-bit unsigned integer. Return 0 and an error if
-// unable to get random data.
+// Uint64 returns a util 64-bit unsigned integer. Return 0 and an error if
+// unable to get util data.
 func Uint64() (uint64, error) {
 	var bytes [8]byte
 
@@ -175,8 +175,8 @@ func Uint64() (uint64, error) {
 	return binary.LittleEndian.Uint64(bytes[:]), nil
 }
 
-// Int64 returns a random 64-bit signed integer. Return 0 and an error if
-// unable to get random data.
+// Int64 returns a util 64-bit signed integer. Return 0 and an error if
+// unable to get util data.
 func Int64() (int64, error) {
 	i, err := Uint64()
 

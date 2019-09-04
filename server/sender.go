@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	. "gomail/config"
-	"gomail/server/random"
+	"gomail/server/util"
 	"io/ioutil"
 	"log"
 	"net/smtp"
@@ -46,7 +46,7 @@ type MailClient struct {
 }
 
 func (mClient MailClient) generatorMessageId() string {
-	randomByte, _ := random.Alpha(uint64(32))
+	randomByte, _ := util.Alpha(uint64(32))
 	hash := sha256.New()
 	hash.Write(randomByte)
 	randomStr := base64.StdEncoding.EncodeToString(hash.Sum(nil))
@@ -94,6 +94,7 @@ func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	}
 	Header["Message-Id"] = task.MessageId
 	Header["In-Reply-To"] = task.ReplyId
+	Header["References"] = task.ReplyId
 	Header["Content-Type"] = "multipart/mixed;boundary=" + boundary
 	Header["Mime-Version"] = "1.0"
 	Header["Date"] = time.Now().String()

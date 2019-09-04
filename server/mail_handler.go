@@ -15,18 +15,18 @@ type MailHandle struct {
 func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var jsonData []byte
 	var task = MailTask{}
-
+	writer.Header().Add("Content-Type", "application/json")
 	jsonData, _ = ioutil.ReadAll(request.Body)
 	err := json.Unmarshal(jsonData, &task)
 	if err != nil {
 		log.Print(err)
 	}
-	err = mh.Client.Send(task)
+	MessageId, err := mh.Client.Send(task)
 	//fmt.Println("end!")
 	if err != nil {
 		log.Print(err)
 		_, _ = writer.Write(response.Fail(1, "error"))
 	} else {
-		_, _ = writer.Write(response.Success(nil))
+		_, _ = writer.Write(response.Success(MessageId))
 	}
 }
