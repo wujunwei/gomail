@@ -1,4 +1,4 @@
-package server
+package imap
 
 import (
 	"gomail/config"
@@ -12,7 +12,6 @@ type Pool interface {
 }
 
 type Worker struct {
-	Client   MailClient
 	LastTime time.Time
 }
 
@@ -52,8 +51,8 @@ func (pool *WorkerPool) Close() {
 func NewPool() (pool WorkerPool, err error) {
 	mailWorkers := make(chan *Worker, config.MailConfig.WorkNumber)
 	for i := 0; i < cap(mailWorkers); i++ {
-		client, _ := NewClient()
-		mailWorkers <- &Worker{Client: client, LastTime: time.Now()}
+
+		mailWorkers <- &Worker{LastTime: time.Now()}
 	}
 	pool.client = mailWorkers
 	pool.timeout = config.MailConfig.Timeout

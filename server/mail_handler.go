@@ -9,24 +9,27 @@ import (
 )
 
 type MailHandle struct {
-	Client MailClient
+	Client *MailClient
 }
 
 func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var jsonData []byte
 	var task = MailTask{}
+	defer func() {
+		r := recover()
+		log.Println(r)
+		err := r.(error)
+		_, _ = writer.Write(response.Fail(1, err.Error()))
+	}()
 	writer.Header().Add("Content-Type", "application/json")
 	jsonData, _ = ioutil.ReadAll(request.Body)
 	err := json.Unmarshal(jsonData, &task)
 	if err != nil {
-		log.Print(err)
+		panic(err)
 	}
 	MessageId, err := mh.Client.Send(task)
-	//fmt.Println("end!")
 	if err != nil {
-		log.Print(err)
-		_, _ = writer.Write(response.Fail(1, "error"))
-	} else {
-		_, _ = writer.Write(response.Success(MessageId))
+		panic(err)
 	}
+	_, _ = writer.Write(response.Success(MessageId))
 }

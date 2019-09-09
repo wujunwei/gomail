@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	. "gomail/config"
 	"gomail/server/util"
@@ -80,7 +81,7 @@ func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName string) {
 		}
 	}
 }
-func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
+func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	buffer := bytes.NewBuffer(nil)
 	boundary := "GoBoundary"
 	Header := make(map[string]string)
@@ -122,7 +123,11 @@ func (mClient MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	return buffer
 }
 
-func (mClient MailClient) Send(task MailTask) (messageId string, err error) {
+func (mClient *MailClient) Send(task MailTask) (messageId string, err error) {
+	if task.From == "" {
+		err = errors.New("unknown json string")
+		return
+	}
 	messageId = mClient.generatorMessageId()
 	task.MessageId = messageId
 	buffer := mClient.BuildStruct(task)
