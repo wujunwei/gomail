@@ -8,6 +8,7 @@ import (
 	"fmt"
 	. "gomail/config"
 	"gomail/server/util"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/smtp"
@@ -29,9 +30,11 @@ type MailTask struct {
 }
 
 type Attachment struct {
-	Name        string `json:"name"`
-	ContentType string `json:"content_type"`
-	WithFile    bool   `json:"with_file"`
+	Id          string `json:"id"`
+	Name        string
+	Reader      io.Reader
+	ContentType string
+	WithFile    bool `json:"with_file"`
 }
 
 type Client interface {
@@ -66,8 +69,8 @@ func (mClient MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]st
 	buffer.WriteString(header)
 	return header
 }
-func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName string) {
-	file, err := ioutil.ReadFile(fileName)
+func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
+	file, err := ioutil.ReadAll(fileName)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -116,7 +119,7 @@ func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 				log.Fatalln(err)
 			}
 		}()
-		mClient.writeFile(buffer, task.Attachment.Name)
+		mClient.writeFile(buffer, task.Attachment.Reader)
 	}
 
 	buffer.WriteString("\r\n--" + boundary + "--")
