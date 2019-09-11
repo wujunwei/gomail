@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"gomail/config"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -31,8 +32,8 @@ func (client *Client) Upload(filename string, contentType string, stream multipa
 }
 
 func (client *Client) Download(id bson.ObjectId) (file *mgo.GridFile, err error) {
-	if id.Valid() {
-
+	if !id.Valid() {
+		err = errors.New("invalid file id")
 	}
 	gridFS := client.DB.GridFS(client.gridPrefix)
 	file, err = gridFS.OpenId(id)
