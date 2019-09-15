@@ -48,8 +48,7 @@ func (client *Client) Close() {
 	client.DB.Session.Close()
 }
 
-func New() (client *Client, err error) {
-	mongoConfig := config.MailConfig.Mongo
+func New(mongoConfig config.Mongo) (client *Client, err error) {
 	session, err := mgo.Dial(mongoConfig.Url)
 	if err != nil {
 		return

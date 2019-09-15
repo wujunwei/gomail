@@ -1,14 +1,21 @@
 
-host: localhost
-port: 8080
 name: Developer Setup
-workNumber: 10
-timeout: 1800
-mail:
+smtp:
+  remote_server: smtp.qq.com:587
+  workNumber: 10
+  host: localhost
+  port: 8080
   user: 1262193323@qq.com
   pwd: kwjklcboqznsbabc
-  smtp: smtp.qq.com:587
-  imap: imap.qq.com:993
+imap:
+  network: tcp
+  remote_server: imap.qq.com:993
+  workNumber: 10
+  timeout: 120
+  host: localhost
+  port: 8080
+  user: 1262193323@qq.com
+  pwd: kwjklcboqznsbabc
 mongo:
   url: mongodb://127.0.0.1:27017
   db: mail_go

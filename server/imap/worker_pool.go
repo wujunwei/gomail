@@ -1,7 +1,6 @@
 package imap
 
 import (
-	"gomail/config"
 	"time"
 )
 
@@ -48,13 +47,12 @@ func (pool *WorkerPool) Close() {
 
 }
 
-func NewPool() (pool WorkerPool, err error) {
-	mailWorkers := make(chan *Worker, config.MailConfig.WorkNumber)
+func NewPool(workNum int, timout time.Duration) (pool WorkerPool, err error) {
+	mailWorkers := make(chan *Worker, workNum)
 	for i := 0; i < cap(mailWorkers); i++ {
-
 		mailWorkers <- &Worker{LastTime: time.Now()}
 	}
 	pool.client = mailWorkers
-	pool.timeout = config.MailConfig.Timeout
+	pool.timeout = timout
 	return
 }

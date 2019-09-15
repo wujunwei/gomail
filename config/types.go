@@ -2,25 +2,33 @@ package config
 
 import "time"
 
-type Mail struct {
-	User     string `yaml:"user"`
-	Password string `yaml:"pwd"`
-	Smtp     string `yaml:"smtp"`
-	Imap     string `yaml:"imap"`
-}
-
 type Mongo struct {
 	Url        string `yaml:"url"`
 	Db         string `yaml:"db"`
 	GridPrefix string `yaml:"gridPrefix"`
 }
 
+type Smtp struct {
+	RemoteServer string `yaml:"remote_server"`
+	User         string `yaml:"user"`
+	Password     string `yaml:"pwd"`
+	Host         string `yaml:"host"`
+	Port         string `yaml:"port"`
+}
+type Imap struct {
+	Host         string        `yaml:"host"`
+	Port         string        `yaml:"port"`
+	RemoteServer string        `yaml:"remote_server"`
+	User         string        `yaml:"user"`
+	Password     string        `yaml:"pwd"`
+	Network      string        `yaml:"network"`
+	WorkNumber   int           `yaml:"workNumber"`
+	Timeout      time.Duration `yaml:"timeout"`
+}
+
 type Config struct {
-	Host       string        `yaml:"host"`
-	Port       string        `yaml:"port"`
-	Name       string        `yaml:"name"`
-	Mail       Mail          `yaml:"mail"`
-	WorkNumber int           `yaml:"workNumber"`
-	Mongo      Mongo         `yaml:"mongo"`
-	Timeout    time.Duration `yaml:"timeout"`
+	Smtp  Smtp   `yaml:"smtp"`
+	Imap  Imap   `yaml:"imap"`
+	Name  string `yaml:"name"`
+	Mongo Mongo  `yaml:"mongo"`
 }

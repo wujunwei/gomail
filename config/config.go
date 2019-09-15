@@ -6,14 +6,12 @@ import (
 	"log"
 )
 
-var MailConfig = Config{}
-
-func init() {
-	data, err := ioutil.ReadFile("./config.yml")
+func Load(path string) (config Config) {
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = yaml.Unmarshal(data, &MailConfig)
+	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,10 +2,16 @@ package main
 
 import (
 	"gomail/config"
+	"gomail/server/db"
 	"gomail/server/smtp"
-	"net"
+	"log"
 )
 
 func main() {
-	smtp.Start(net.JoinHostPort(config.MailConfig.Host, config.MailConfig.Port))
+	mailConfig := config.Load("./config.yml")
+	mongo, err := db.New(mailConfig.Mongo)
+	if err != nil {
+		log.Fatal(err)
+	}
+	smtp.Start(mailConfig.Smtp, mongo)
 }

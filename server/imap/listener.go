@@ -5,7 +5,6 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"log"
-	"os"
 )
 
 const (
@@ -34,23 +33,6 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("Logged in")
-	//mailboxes := make(chan *imap.MailboxInfo, 20)
-	//go func() {
-	//	_ = c.List("", "*", mailboxes)
-	//}()
-	////列取邮件夹
-	//for m := range mailboxes {
-	//	mbox, err := c.Select(m.Name, false)
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	to := mbox.Items
-	//	for key, mail := range to{
-	//		fmt.Printf("%s   : %+v \n", key,mail)
-	//	}
-	//	log.Printf("%s : %d", m.Name, mbox.Messages)
-	//}
-	//os.Exit(0)
 
 	seqset := &imap.SeqSet{}
 
@@ -62,7 +44,7 @@ func main() {
 
 	log.Println("Last 4 messages:")
 	for msg := range messages {
-		fmt.Printf("%+v\n", msg.Envelope.From[0].PersonalName)
+		fmt.Printf("%+v\n", msg.Envelope.MessageId)
 	}
 
 	if err := <-done; err != nil {

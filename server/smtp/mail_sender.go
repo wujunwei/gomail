@@ -138,10 +138,10 @@ func (mClient *MailClient) Send(task MailTask) (messageId string, err error) {
 	return
 }
 
-func NewClient() (MailSender MailClient, err error) {
+func NewClient(smtpConfig Smtp) (MailSender MailClient, err error) {
 	//auth
-	MailSender.HostName = MailConfig.Host
-	MailSender.Addr = MailConfig.Mail.Smtp
-	MailSender.Auth = smtp.PlainAuth("", MailConfig.Mail.User, MailConfig.Mail.Password, strings.Split(MailConfig.Mail.Smtp, ":")[0])
+	MailSender.HostName = smtpConfig.Host
+	MailSender.Addr = smtpConfig.RemoteServer
+	MailSender.Auth = smtp.PlainAuth("", smtpConfig.User, smtpConfig.Password, strings.Split(smtpConfig.RemoteServer, ":")[0])
 	return
 }
