@@ -3,6 +3,7 @@ package main
 import (
 	"gomail/config"
 	"gomail/server/db"
+	"gomail/server/imap"
 	"gomail/server/smtp"
 	"log"
 )
@@ -13,5 +14,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	smtp.Start(mailConfig.Smtp, mongo)
+	go smtp.Start(mailConfig.Smtp, mongo)
+	imap.StartAndListen(mailConfig.Imap)
 }
