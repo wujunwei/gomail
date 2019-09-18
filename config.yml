@@ -2,9 +2,8 @@
 name: Developer Setup
 smtp:
   remote_server: smtp.qq.com:587
-  workNumber: 10
   host: localhost
-  port: 8080
+  port: 8081
   user: 1262193323@qq.com
   pwd: kwjklcboqznsbabc
 imap:
@@ -17,7 +16,8 @@ imap:
       remote_server: imap.qq.com:993
       user: 1262193323@qq.com
       pwd: kwjklcboqznsbabc
+      flush_time: 10
 mongo:
   url: mongodb://127.0.0.1:27017
   db: mail_go
-  gridPrefix: mail
+  grid_prefix: mail

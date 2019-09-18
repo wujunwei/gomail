@@ -47,7 +47,7 @@ func (pool *WorkerPool) Close() {
 
 }
 
-func NewPool(workNum int, timout time.Duration) (pool WorkerPool, err error) {
+func _(workNum int, timout time.Duration) (pool WorkerPool, err error) {
 	mailWorkers := make(chan *Worker, workNum)
 	for i := 0; i < cap(mailWorkers); i++ {
 		mailWorkers <- &Worker{LastTime: time.Now()}
