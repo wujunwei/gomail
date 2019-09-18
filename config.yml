@@ -9,14 +9,15 @@ smtp:
   pwd: kwjklcboqznsbabc
 imap:
   network: tcp
-  remote_server: imap.qq.com:993
-  workNumber: 10
   timeout: 120
   host: localhost
   port: 8080
-  user: 1262193323@qq.com
-  pwd: kwjklcboqznsbabc
+  account:
+    -
+      remote_server: imap.qq.com:993
+      user: 1262193323@qq.com
+      pwd: kwjklcboqznsbabc
 mongo:
   url: mongodb://127.0.0.1:27017
   db: mail_go
-  gridPrefix: mail_
+  gridPrefix: mail

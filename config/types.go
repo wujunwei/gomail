@@ -15,15 +15,20 @@ type Smtp struct {
 	Host         string `yaml:"host"`
 	Port         string `yaml:"port"`
 }
+
 type Imap struct {
-	Host         string        `yaml:"host"`
-	Port         string        `yaml:"port"`
-	RemoteServer string        `yaml:"remote_server"`
-	User         string        `yaml:"user"`
-	Password     string        `yaml:"pwd"`
-	Network      string        `yaml:"network"`
-	WorkNumber   int           `yaml:"workNumber"`
-	Timeout      time.Duration `yaml:"timeout"`
+	Host       string        `yaml:"host"`
+	Port       string        `yaml:"port"`
+	Accounts   []Account     `yaml:"account"`
+	Network    string        `yaml:"network"`
+	WorkNumber int           `yaml:"workNumber"`
+	Timeout    time.Duration `yaml:"timeout"`
+}
+
+type Account struct {
+	RemoteServer string `yaml:"remote_server"`
+	User         string `yaml:"user"`
+	Password     string `yaml:"pwd"`
 }
 
 type Config struct {
