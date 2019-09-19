@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 )
@@ -12,8 +13,15 @@ func main() {
 		fmt.Print(err)
 		os.Exit(0)
 	}
-	_, _ = conn.Write([]byte("helo"))
+	_, _ = conn.Write([]byte("hello"))
 	rec := make([]byte, 10)
-	conn.Read(rec)
-	print(rec)
+	for {
+		_, err = conn.Read(rec)
+		if err != nil {
+			log.Panicln(err)
+		}
+		fmt.Println(string(rec))
+	}
+
+	_ = conn.Close()
 }

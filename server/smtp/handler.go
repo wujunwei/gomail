@@ -54,7 +54,7 @@ type FileHandle struct {
 
 func (fh *FileHandle) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/json")
-	_ = request.ParseMultipartForm(10000)
+	_ = request.ParseMultipartForm(10240)
 	files, ok := request.MultipartForm.File["upload"]
 
 	if ok {

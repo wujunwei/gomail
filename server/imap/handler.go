@@ -1,6 +1,7 @@
 package imap
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -27,6 +28,10 @@ func (mh *MailHandler) Serve(conn net.Conn) {
 	msgChan := make(chan []byte, 50)
 	mh.connMap[conn] = msgChan
 	heartbeatTimer := time.NewTimer(time.Duration(30 * time.Second))
+	defer func() {
+		heartbeatTimer.Stop()
+		fmt.Println("close!")
+	}()
 out:
 	for {
 		select {
@@ -35,6 +40,7 @@ out:
 				_ = conn.SetWriteDeadline(time.Now().Add(mh.writeTimeout))
 				_, err := conn.Write(msg)
 				if err != nil {
+					log.Println(err)
 					break out
 				}
 			}
@@ -46,8 +52,10 @@ out:
 			log.Println(string(data))
 			_, err = conn.Write([]byte("pong"))
 			if err != nil {
+				log.Println(err)
 				break out
 			}
+			heartbeatTimer.Reset(30 * time.Second)
 		}
 	}
 
