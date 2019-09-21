@@ -2,7 +2,7 @@ package main
 
 import (
 	"gomail/config"
-	"gomail/server/imap"
+	"gomail/imap"
 )
 
 func main() {

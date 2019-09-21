@@ -2,8 +2,8 @@ package smtp
 
 import (
 	"encoding/json"
-	"gomail/server/db"
-	"gomail/server/response"
+	"gomail/db"
+	"gomail/response"
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"

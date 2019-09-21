@@ -26,9 +26,13 @@ type Imap struct {
 
 type Account struct {
 	RemoteServer string        `yaml:"remote_server"`
-	User         string        `yaml:"user"`
-	Password     string        `yaml:"pwd"`
+	Auth         Auth          `yaml:"auth"`
+	Timeout      time.Duration `yaml:"timeout"`
 	FlushTime    time.Duration `yaml:"flush_time"`
+}
+type Auth struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"pwd"`
 }
 
 type Config struct {

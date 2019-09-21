@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	. "gomail/config"
-	"gomail/server/util"
+	"gomail/util"
 	"io"
 	"io/ioutil"
 	"log"

@@ -1,19 +1,41 @@
 package imap
 
 import (
+	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"gomail/config"
+	"time"
 )
 
-//const (
-//	server   = "imap.qq.com:993"
-//	username = "1262193323@qq.com"
-//	password = "kwjklcboqznsbabc"
-//)
+type Client struct {
+	Auth    config.Auth
+	Done    chan error
+	mailBox *client.Client
+}
 
-var c *client.Client
+func (client Client) Fetch() chan *imap.Message {
+	seqSet := &imap.SeqSet{}
+	ch := make(chan *imap.Message, 10)
+	go func() {
+		client.Done <- client.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchEnvelope}, ch)
+	}()
 
-func init() {
+	return ch
+}
 
+func New(imapConfig config.Account) (instance Client, err error) {
+	imapClient, err := client.Dial(imapConfig.RemoteServer)
+
+	if err != nil {
+		return
+	}
+	imapClient.Timeout = imapConfig.Timeout * time.Second
+	err = imapClient.Login(imapConfig.Auth.User, imapConfig.Auth.Password)
+	instance = Client{
+		mailBox: imapClient,
+		Auth:    imapConfig.Auth,
+		Done:    make(chan error, 1)}
+	return
 }
 
 //func main() {

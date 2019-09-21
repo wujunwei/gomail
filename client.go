@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func main() {
+func ain() {
 	conn, err := net.Dial("tcp", "localhost:8080")
 	if err != nil {
 		fmt.Print(err)
@@ -18,7 +18,8 @@ func main() {
 	for {
 		_, err = conn.Read(rec)
 		if err != nil {
-			log.Panicln(err)
+			log.Println(err)
+			break
 		}
 		fmt.Println(string(rec))
 	}
