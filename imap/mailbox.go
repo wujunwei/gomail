@@ -4,16 +4,22 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"gomail/config"
+	"sync"
 	"time"
 )
 
 type Client struct {
-	Auth    config.Auth
-	Done    chan error
-	mailBox *client.Client
+	flushTime     time.Duration
+	subscriberMax int
+	lock          sync.RWMutex
+	subscribers   []chan []byte
+	User          string
+	Password      string
+	Done          chan error
+	mailBox       *client.Client
 }
 
-func (client Client) Fetch() chan *imap.Message {
+func (client *Client) Fetch() chan *imap.Message {
 	seqSet := &imap.SeqSet{}
 	ch := make(chan *imap.Message, 10)
 	go func() {
@@ -23,18 +29,39 @@ func (client Client) Fetch() chan *imap.Message {
 	return ch
 }
 
-func New(imapConfig config.Account) (instance Client, err error) {
+func (client *Client) addSubscriber(subscriber chan []byte) bool {
+	client.lock.Lock()
+	if len(client.subscribers) >= client.subscriberMax {
+		return false
+	}
+	client.subscribers = append(client.subscribers, subscriber)
+	client.lock.Unlock()
+	return true
+}
+
+func (client *Client) Login() (err error) {
+	err = client.mailBox.Login(client.User, client.Password)
+	return
+}
+
+func New(imapConfig config.Account) (instance *Client, err error) {
 	imapClient, err := client.Dial(imapConfig.RemoteServer)
 
 	if err != nil {
 		return
 	}
 	imapClient.Timeout = imapConfig.Timeout * time.Second
-	err = imapClient.Login(imapConfig.Auth.User, imapConfig.Auth.Password)
-	instance = Client{
-		mailBox: imapClient,
-		Auth:    imapConfig.Auth,
-		Done:    make(chan error, 1)}
+	instance = &Client{
+		flushTime:     imapConfig.FlushTime,
+		subscriberMax: 50,
+		lock:          sync.RWMutex{},
+		mailBox:       imapClient,
+		User:          imapConfig.Auth.User,
+		Password:      imapConfig.Auth.Password,
+		Done:          make(chan error, 1),
+		subscribers:   make([]chan []byte, 50),
+	}
+	instance.Login()
 	return
 }
 
