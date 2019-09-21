@@ -1,3 +1,3 @@
 # mail-go
 
-##a high performance  mail subscribe Component
+## a high performance  mail subscribe Component
