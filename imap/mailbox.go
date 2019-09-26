@@ -11,6 +11,7 @@ import (
 type Client struct {
 	flushTime     time.Duration
 	subscriberMax int
+	RemoteServer  string
 	lock          sync.RWMutex
 	subscribers   []chan []byte
 	User          string
@@ -19,28 +20,38 @@ type Client struct {
 	mailBox       *client.Client
 }
 
-func (client *Client) Fetch() chan *imap.Message {
+func (cli *Client) Fetch() chan *imap.Message {
 	seqSet := &imap.SeqSet{}
 	ch := make(chan *imap.Message, 10)
 	go func() {
-		client.Done <- client.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchEnvelope}, ch)
+		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchEnvelope}, ch)
 	}()
 
 	return ch
 }
 
-func (client *Client) addSubscriber(subscriber chan []byte) bool {
-	client.lock.Lock()
-	if len(client.subscribers) >= client.subscriberMax {
+func (cli *Client) addSubscriber(subscriber chan []byte) bool {
+	cli.lock.Lock()
+	if len(cli.subscribers) >= cli.subscriberMax {
 		return false
 	}
-	client.subscribers = append(client.subscribers, subscriber)
-	client.lock.Unlock()
+	cli.subscribers = append(cli.subscribers, subscriber)
+	cli.lock.Unlock()
 	return true
 }
 
-func (client *Client) Login() (err error) {
-	err = client.mailBox.Login(client.User, client.Password)
+func (cli *Client) Login() (err error) {
+	err = cli.mailBox.Login(cli.User, cli.Password)
+	return
+}
+
+func (cli *Client) Reconnect() (err error) {
+	mailClient, err := client.Dial(cli.RemoteServer)
+	if err != nil {
+		return
+	}
+	err = mailClient.Login(cli.User, cli.Password)
+	cli.mailBox = mailClient
 	return
 }
 
@@ -56,12 +67,13 @@ func New(imapConfig config.Account) (instance *Client, err error) {
 		subscriberMax: 50,
 		lock:          sync.RWMutex{},
 		mailBox:       imapClient,
+		RemoteServer:  imapConfig.RemoteServer,
 		User:          imapConfig.Auth.User,
 		Password:      imapConfig.Auth.Password,
 		Done:          make(chan error, 1),
 		subscribers:   make([]chan []byte, 50),
 	}
-	instance.Login()
+	err = instance.Login()
 	return
 }
 

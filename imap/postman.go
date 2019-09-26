@@ -54,7 +54,7 @@ func (postman *Postman) StartToFetch() {
 				case err := <-client.Done:
 					if err != nil {
 						log.Println(err)
-						err = client.Login()
+						err = client.Reconnect()
 						if err != nil {
 							log.Println("retry :" + err.Error())
 						}
