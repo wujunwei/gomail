@@ -46,12 +46,11 @@ func (cli *Client) Login() (err error) {
 }
 
 func (cli *Client) Reconnect() (err error) {
-	mailClient, err := client.Dial(cli.RemoteServer)
+	cli.mailBox, err = client.Dial(cli.RemoteServer)
 	if err != nil {
 		return
 	}
-	err = mailClient.Login(cli.User, cli.Password)
-	cli.mailBox = mailClient
+	err = cli.mailBox.Login(cli.User, cli.Password)
 	return
 }
 
