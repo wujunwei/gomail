@@ -71,8 +71,10 @@ out:
 			}
 		case err := <-conn.Done:
 			{
-				log.Println(err)
-				break out
+				if err != nil {
+					log.Println(err)
+					break out
+				}
 			}
 		}
 	}

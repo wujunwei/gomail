@@ -22,9 +22,15 @@ type Client struct {
 
 func (cli *Client) Fetch() chan *imap.Message {
 	seqSet := &imap.SeqSet{}
-	ch := make(chan *imap.Message, 10)
+	ch := make(chan *imap.Message, 100)
+	status, _ := cli.mailBox.Select("INBOX", true)
+	if status.UnseenSeqNum == 0 {
+		close(ch)
+		return ch
+	}
+	seqSet.AddRange(status.UnseenSeqNum, status.UnseenSeqNum+status.Unseen-1)
 	go func() {
-		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchEnvelope}, ch)
+		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchAll}, ch)
 	}()
 
 	return ch

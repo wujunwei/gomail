@@ -26,7 +26,7 @@ func (postman *Postman) Subscribe(user, password string, msgChan chan []byte) (e
 	return
 }
 
-func (postman *Postman) addClient(accounts []config.Account) {
+func (postman *Postman) addClients(accounts []config.Account) {
 	for _, account := range accounts {
 		client, err := New(account)
 		if err != nil {
@@ -70,6 +70,6 @@ func NewPostMan(accounts []config.Account) (postman *Postman) {
 		Lock:     sync.RWMutex{},
 		mailPool: make(map[string]*Client, len(accounts)),
 	}
-	postman.addClient(accounts)
+	postman.addClients(accounts)
 	return
 }
