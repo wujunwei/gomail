@@ -30,7 +30,7 @@ func (cli *Client) Fetch() chan *imap.Message {
 	}
 	seqSet.AddRange(status.UnseenSeqNum, status.UnseenSeqNum+status.Unseen-1)
 	go func() {
-		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchAll}, ch)
+		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]"}, ch)
 	}()
 
 	return ch
