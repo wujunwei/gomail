@@ -3,10 +3,26 @@ package imap
 import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/emersion/go-message"
+	"golang.org/x/text/encoding/simplifiedchinese"
 	"gomail/config"
+	"io"
 	"sync"
 	"time"
 )
+
+func init() {
+	message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
+		switch charset {
+		case "gb2312":
+			reader = simplifiedchinese.GB18030.NewDecoder().Reader(input)
+		case "gb18030":
+			reader = simplifiedchinese.GB18030.NewDecoder().Reader(input)
+		}
+		//todo add default decode
+		return
+	}
+}
 
 type Client struct {
 	flushTime     time.Duration

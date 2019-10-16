@@ -2,11 +2,26 @@ package imap
 
 import (
 	"errors"
+	"github.com/emersion/go-imap"
+	"github.com/emersion/go-message/mail"
 	"gomail/config"
 	"log"
 	"sync"
 	"time"
 )
+
+type Mail struct {
+	MessageId   string
+	From        string   `json:"from"`
+	To          []string `json:"to"`
+	Cc          []string `json:"cc"`
+	Bcc         []string `json:"bcc"`
+	Subject     string   `json:"subject"`
+	ReplyId     string   `json:"reply_id"`
+	Body        string   `json:"body"`
+	ContentType string   `json:"content_type"`
+	Attachment  string   `json:"id"`
+}
 
 //alive check， subscribe restart client
 type Postman struct {
@@ -45,10 +60,9 @@ func (postman *Postman) StartToFetch() {
 				select {
 				case <-ticker:
 					mailChan := client.Fetch()
-					for mail := range mailChan {
-						//todo deal mail
+					for msg := range mailChan {
 						for _, listener := range client.subscribers {
-							listener <- []byte(mail.Envelope.Subject)
+							listener <- postman.openMessage(msg)
 						}
 					}
 				case err := <-client.Done:
@@ -63,6 +77,14 @@ func (postman *Postman) StartToFetch() {
 			}
 		}()
 	}
+}
+
+func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
+	var section imap.BodySectionName
+	mr, _ := mail.CreateReader(msg.GetBody(&section))
+	_ = mr.Header
+	//todo deal header
+	return
 }
 
 func NewPostMan(accounts []config.Account) (postman *Postman) {

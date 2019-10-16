@@ -40,7 +40,7 @@ func main() {
 	log.Println("Connected")
 
 	// Don't forget to logout
-	defer c.Logout()
+	defer func() { _ = c.Logout() }()
 
 	// Login
 	if err := c.Login("wjw3323@live.com", "126219"); err != nil {
