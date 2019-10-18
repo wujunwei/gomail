@@ -1,0 +1,20 @@
+
+syntax = "proto3";
+package test;
+
+
+message Mail {
+
+    int32 messageId = 1;  // Unique ID number for this person.
+    string subject = 2;
+    repeated string to = 3;
+    repeated string from = 4;
+    message Body{
+        string contentType = 1;
+        string fds = 2;
+    }
+    repeated Body text = 5;
+    Body attachment = 6;
+
+
+}
