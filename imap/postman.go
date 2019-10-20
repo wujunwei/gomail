@@ -4,7 +4,9 @@ import (
 	"errors"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-message/mail"
+	"github.com/protobuf/proto"
 	"gomail/config"
+	"gomail/response"
 	"log"
 	"sync"
 	"time"
@@ -82,8 +84,11 @@ func (postman *Postman) StartToFetch() {
 func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
 	var section imap.BodySectionName
 	mr, _ := mail.CreateReader(msg.GetBody(&section))
-	_ = mr.Header
-	//todo deal header
+	msgStruct := response.ConstructMsg(mr)
+	res, err := proto.Marshal(msgStruct)
+	if err != nil {
+		log.Println(err)
+	}
 	return
 }
 

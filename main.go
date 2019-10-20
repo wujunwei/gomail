@@ -19,11 +19,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/axgle/mahonia"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message"
 	"github.com/emersion/go-message/mail"
-	"golang.org/x/text/encoding/simplifiedchinese"
 	"io"
 	"io/ioutil"
 	"log"
@@ -92,11 +92,11 @@ func main() {
 		mr, _ := mail.CreateReader(msg.GetBody(&section))
 		header := mr.Header
 		message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
-			switch charset {
-			case "gb2312":
-				reader = simplifiedchinese.GB18030.NewDecoder().Reader(input)
-			case "gb18030":
-				reader = simplifiedchinese.GB18030.NewDecoder().Reader(input)
+			decoder := mahonia.NewDecoder(charset)
+			if decoder != nil {
+				reader = decoder.NewReader(input)
+			} else {
+				reader = input
 			}
 			return
 		}

@@ -1,10 +1,10 @@
 package imap
 
 import (
+	"github.com/axgle/mahonia"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message"
-	"golang.org/x/text/encoding/simplifiedchinese"
 	"gomail/config"
 	"io"
 	"sync"
@@ -13,13 +13,12 @@ import (
 
 func init() {
 	message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
-		switch charset {
-		case "gb2312":
-			reader = simplifiedchinese.GB18030.NewDecoder().Reader(input)
-		case "gb18030":
-			reader = simplifiedchinese.GB18030.NewDecoder().Reader(input)
+		decoder := mahonia.NewDecoder(charset)
+		if decoder != nil {
+			reader = decoder.NewReader(input)
+		} else {
+			reader = input
 		}
-		//todo add default decode
 		return
 	}
 }
@@ -97,38 +96,3 @@ func New(imapConfig config.Account) (instance *Client, err error) {
 	err = instance.Login()
 	return
 }
-
-//func main() {
-//
-//	var err error
-//	log.Println("Connecting to server...")
-//	c, err = client.DialTLS(server, nil)
-//	//连接失败报错
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	//登陆
-//	if err := c.Login(username, password); err != nil {
-//		log.Fatal(err)
-//	}
-//	log.Println("Logged in")
-//
-//	seqset := &imap.SeqSet{}
-//
-//	messages := make(chan *imap.Message, 10)
-//	done := make(chan error, 1)
-//	go func() {
-//		done <- c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope}, messages)
-//	}()
-//
-//	log.Println("Last 4 messages:")
-//	for msg := range messages {
-//		fmt.Printf("%+v\n", msg.Envelope.MessageId)
-//	}
-//
-//	if err := <-done; err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	log.Println("Done!")
-//}
