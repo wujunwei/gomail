@@ -37,6 +37,12 @@ func (mc *MailConn) Write(bytes []byte) (err error) {
 	return
 }
 
+func (mc *MailConn) Read(b []byte) (n int, err error) {
+	err = mc.Conn.SetReadDeadline(time.Now().Add(mc.readTimeout))
+	n, err = mc.Conn.Read(b)
+	return
+}
+
 type MailHandler struct {
 	connMap map[MailConn]chan []byte
 }
@@ -62,6 +68,8 @@ func (mh *MailHandler) Serve(conn MailConn) {
 	defer func() {
 		fmt.Println("close!")
 	}()
+	msg := make([]byte, 1)
+	_, _ = conn.Read(msg)
 out:
 	for {
 		select {
@@ -73,6 +81,7 @@ out:
 			{
 				if err != nil {
 					log.Println(err)
+					delete(mh.connMap, conn) //清退连接池
 					break out
 				}
 			}
