@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -16,7 +15,6 @@ type Handler interface {
 
 type MailConn struct {
 	Conn         net.Conn
-	Lock         sync.RWMutex
 	Done         chan error
 	msgChan      chan []byte
 	readTimeout  time.Duration
@@ -71,13 +69,15 @@ func (mh *MailHandler) Serve(conn *MailConn) {
 	}
 	log.Println("accept !")
 	msg := make([]byte, 1024)
-	_, _ = conn.Read(msg)
+	_, err := conn.Read(msg)
+	if err != nil {
+		log.Fatal(err)
+	}
 	account := strings.Split(string(msg), ":")
 	if len(account) < 2 {
 		conn.Close()
 		return
 	}
-	log.Println(account)
 	conn.Done <- mh.postman.Subscribe(account[0], account[1], conn)
 out:
 	for {

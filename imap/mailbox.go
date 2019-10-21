@@ -15,6 +15,8 @@ import (
 
 func init() {
 	message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
+
+		log.Println(charset)
 		if strings.ToLower(charset) == "gb2312" {
 			charset = "gb2312"
 		}
@@ -32,7 +34,7 @@ type Client struct {
 	flushTime     time.Duration
 	subscriberMax int
 	RemoteServer  string
-	lock          sync.RWMutex
+	lock          sync.Mutex
 	subscribers   map[*MailConn]chan []byte
 	User          string
 	Password      string
@@ -40,21 +42,29 @@ type Client struct {
 	mailBox       *client.Client
 }
 
-func (cli *Client) Fetch() chan *imap.Message {
+func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
 	seqSet := &imap.SeqSet{}
 	ch := make(chan *imap.Message, 100)
 	status, err := cli.mailBox.Select("INBOX", false)
 	if err != nil || status.UnseenSeqNum == 0 {
-		log.Println(status.UnseenSeqNum)
+		log.Println("没有邮件")
 		close(ch)
-		return ch
+		return ch, seqSet
 	}
+	if status.Unseen == 0 {
+		status.Unseen = 1
+	}
+	log.Printf("msg: %+v \n", status) //todo search
 	seqSet.AddRange(status.UnseenSeqNum, status.UnseenSeqNum+status.Unseen-1)
 	go func() {
-		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]"}, ch)
+		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]", imap.FetchFlags, imap.FetchUid}, ch)
 	}()
 
-	return ch
+	return ch, seqSet
+}
+
+func (cli *Client) See(seqSet *imap.SeqSet) {
+	cli.Done <- cli.mailBox.Store(seqSet, imap.AddFlags, []interface{}{imap.SeenFlag}, nil)
 }
 
 func (cli *Client) addSubscriber(conn *MailConn) bool {
@@ -105,7 +115,6 @@ func New(imapConfig config.Account) (instance *Client, err error) {
 	instance = &Client{
 		flushTime:     imapConfig.FlushTime,
 		subscriberMax: 50,
-		lock:          sync.RWMutex{},
 		mailBox:       imapClient,
 		RemoteServer:  imapConfig.RemoteServer,
 		User:          imapConfig.Auth.User,

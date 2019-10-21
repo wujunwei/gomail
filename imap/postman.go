@@ -7,6 +7,7 @@ import (
 	"gomail/config"
 	"gomail/response"
 	"log"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,8 +33,7 @@ type Postman struct {
 
 func (postman *Postman) Subscribe(user, password string, conn *MailConn) (err error) {
 	chooseBox, ok := postman.mailPool[user]
-	log.Println(user + " 开始订阅")
-	if !ok || password != chooseBox.Password {
+	if !ok || strings.Trim(password, "\000") != chooseBox.Password {
 		err = errors.New("user is not exist ot password invalid")
 		return
 	}
@@ -71,16 +71,21 @@ func (postman *Postman) StartToFetch() {
 			for {
 				select {
 				case <-ticker:
-					mailChan := client.Fetch()
+					mailChan, seqSet := client.Fetch()
 					for msg := range mailChan {
+						postman.openMessage(msg)
 						for _, listener := range client.subscribers {
 							listener <- postman.openMessage(msg)
 						}
 					}
+					if seqSet != nil {
+						//client.See(seqSet)
+					}
+
 				case err := <-client.Done:
 					if err != nil {
-						log.Println(err)
-						err = client.Reconnect()
+						log.Println("error happen:", err)
+						//err = client.Reconnect()
 						if err != nil {
 							log.Println("retry :" + err.Error())
 						}
@@ -93,6 +98,7 @@ func (postman *Postman) StartToFetch() {
 
 func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
 	var section imap.BodySectionName
+	log.Println(msg.Flags)
 	mr, _ := mail.CreateReader(msg.GetBody(&section))
 	res, err := response.ConstructMsg(mr)
 	if err != nil {

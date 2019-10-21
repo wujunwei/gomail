@@ -1,4 +1,3 @@
-
 name: Developer Setup
 smtp:
   remote_server: smtp.qq.com:587
@@ -8,12 +7,11 @@ smtp:
   pwd: kwjklcboqznsbabc
 imap:
   network: tcp
-  timeout: 120
+  timeout: 10
   host: localhost
   port: 8080
   account:
-    -
-      remote_server: imap.qq.com:993
+    - remote_server: imap.qq.com:993
       auth:
         user: 1262193323@qq.com
         pwd: kwjklcboqznsbabc

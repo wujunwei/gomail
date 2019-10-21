@@ -4,7 +4,7 @@ import (
 	"gomail/config"
 	"log"
 	"net"
-	"sync"
+	"time"
 )
 
 func StartAndListen(imap config.Imap) {
@@ -25,12 +25,11 @@ func StartAndListen(imap config.Imap) {
 	for {
 		conn, _ := listener.Accept()
 		mConn := &MailConn{
-			Lock:         sync.RWMutex{},
 			Conn:         conn,
 			msgChan:      make(chan []byte, 50),
-			Done:         make(chan error),
-			readTimeout:  imap.Timeout,
-			writeTimeout: imap.Timeout,
+			Done:         make(chan error, 1),
+			readTimeout:  imap.Timeout * time.Second,
+			writeTimeout: imap.Timeout * time.Second,
 		}
 		go handler.Serve(mConn)
 	}

@@ -8,16 +8,14 @@ import (
 	"log"
 )
 
-//todo protobuf
-
 func ConstructMsg(mr *mail.Reader) ([]byte, error) {
 	header := mr.Header
 	subject, _ := header.Subject()
 	toAddress, _ := header.AddressList("To")
 	fromAddress, _ := header.AddressList("From")
-
+	log.Println(header.Get("Date"), subject, toAddress, fromAddress)
 	var attachBody *Body
-	text := make([]*Body, 2)
+	text := make([]*Body, 1)
 	for {
 		p, err := mr.NextPart()
 		if err == io.EOF {
