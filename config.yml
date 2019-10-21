@@ -17,7 +17,7 @@ imap:
       auth:
         user: 1262193323@qq.com
         pwd: kwjklcboqznsbabc
-      timeout: 10
+      timeout: 0
       flush_time: 10
 mongo:
   url: mongodb://127.0.0.1:27017

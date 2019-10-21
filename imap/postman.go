@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-message/mail"
-	"github.com/protobuf/proto"
 	"gomail/config"
 	"gomail/response"
 	"log"
@@ -31,15 +30,26 @@ type Postman struct {
 	mailPool map[string]*Client
 }
 
-func (postman *Postman) Subscribe(user, password string, msgChan chan []byte) (err error) {
+func (postman *Postman) Subscribe(user, password string, conn *MailConn) (err error) {
 	chooseBox, ok := postman.mailPool[user]
-	if ok && password != chooseBox.Password {
+	log.Println(user + " 开始订阅")
+	if !ok || password != chooseBox.Password {
 		err = errors.New("user is not exist ot password invalid")
 		return
 	}
-	if !chooseBox.addSubscriber(msgChan) {
+	if !chooseBox.addSubscriber(conn) {
 		err = errors.New("up to the max subscribe client")
 	}
+	log.Println(user + " 订阅成功")
+	return
+}
+
+func (postman *Postman) UnSubscribe(user string, conn *MailConn) {
+	chooseBox, ok := postman.mailPool[user]
+	if !ok {
+		return
+	}
+	chooseBox.unSubscribe(conn)
 	return
 }
 
@@ -84,12 +94,17 @@ func (postman *Postman) StartToFetch() {
 func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
 	var section imap.BodySectionName
 	mr, _ := mail.CreateReader(msg.GetBody(&section))
-	msgStruct := response.ConstructMsg(mr)
-	res, err := proto.Marshal(msgStruct)
+	res, err := response.ConstructMsg(mr)
 	if err != nil {
 		log.Println(err)
 	}
 	return
+}
+
+func (postman *Postman) Close() {
+	for _, cli := range postman.mailPool {
+		cli.Close()
+	}
 }
 
 func NewPostMan(accounts []config.Account) (postman *Postman) {

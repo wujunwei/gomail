@@ -2,9 +2,9 @@ package imap
 
 import (
 	"fmt"
-	"gomail/config"
 	"log"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,10 +15,10 @@ type Handler interface {
 }
 
 type MailConn struct {
-	auth         config.Auth
 	Conn         net.Conn
 	Lock         sync.RWMutex
 	Done         chan error
+	msgChan      chan []byte
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 }
@@ -28,6 +28,7 @@ func (mc *MailConn) accept() bool {
 }
 func (mc *MailConn) Close() {
 	_ = mc.Conn.Close()
+	close(mc.msgChan)
 	close(mc.Done)
 }
 
@@ -44,44 +45,52 @@ func (mc *MailConn) Read(b []byte) (n int, err error) {
 }
 
 type MailHandler struct {
-	connMap map[MailConn]chan []byte
+	postman *Postman
+}
+
+func (mh *MailHandler) PostmanStart() {
+	mh.postman.StartToFetch()
+}
+
+func (mh *MailHandler) CleanUpClient(user string, conn *MailConn) {
+	mh.postman.UnSubscribe(user, conn)
+	conn.Close()
 }
 
 func (mh *MailHandler) Close() {
-	if mh.connMap != nil {
-		for conn := range mh.connMap {
-			conn.Close()
-		}
-		mh.connMap = nil
-	}
-
+	mh.postman.Close()
 }
 
-func (mh *MailHandler) Serve(conn MailConn) {
+func (mh *MailHandler) Serve(conn *MailConn) {
 	log.Println("one connection comes")
+	defer func() {
+		fmt.Println("close!")
+	}()
 	if !conn.accept() {
 		return
 	}
 	log.Println("accept !")
-	msgChan := make(chan []byte, 50)
-	mh.connMap[conn] = msgChan
-	defer func() {
-		fmt.Println("close!")
-	}()
-	msg := make([]byte, 1)
+	msg := make([]byte, 1024)
 	_, _ = conn.Read(msg)
+	account := strings.Split(string(msg), ":")
+	if len(account) < 2 {
+		conn.Close()
+		return
+	}
+	log.Println(account)
+	conn.Done <- mh.postman.Subscribe(account[0], account[1], conn)
 out:
 	for {
 		select {
-		case msg := <-msgChan:
+		case msg := <-conn.msgChan:
 			{
 				conn.Done <- conn.Write(msg)
 			}
 		case err := <-conn.Done:
 			{
 				if err != nil {
-					log.Println(err)
-					delete(mh.connMap, conn) //清退连接池
+					log.Println(err, "client clean up !")
+					mh.CleanUpClient(account[0], conn) //清退连接
 					break out
 				}
 			}
