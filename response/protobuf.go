@@ -15,7 +15,7 @@ func ConstructMsg(mr *mail.Reader) ([]byte, error) {
 	fromAddress, _ := header.AddressList("From")
 	log.Println(header.Get("Date"), subject, toAddress, fromAddress)
 	var attachBody *Body
-	text := make([]*Body, 1)
+	var text []*Body
 	for {
 		p, err := mr.NextPart()
 		if err == io.EOF {

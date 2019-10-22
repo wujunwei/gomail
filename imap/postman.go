@@ -79,10 +79,12 @@ func (postman *Postman) StartToFetch() {
 						}
 					}
 					if seqSet != nil {
-						//client.See(seqSet)
+						log.Println("start to see")
+						go client.See(seqSet)
+						log.Println("see!")
 					}
 
-				case err := <-client.Done:
+				case err := <-client.Done: //处理异常需开启协程
 					if err != nil {
 						log.Println("error happen:", err)
 						//err = client.Reconnect()
@@ -98,11 +100,10 @@ func (postman *Postman) StartToFetch() {
 
 func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
 	var section imap.BodySectionName
-	log.Println(msg.Flags)
 	mr, _ := mail.CreateReader(msg.GetBody(&section))
 	res, err := response.ConstructMsg(mr)
 	if err != nil {
-		log.Println(err)
+		log.Println("construct message error:", err)
 	}
 	return
 }

@@ -15,10 +15,8 @@ import (
 
 func init() {
 	message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
-
-		log.Println(charset)
 		if strings.ToLower(charset) == "gb2312" {
-			charset = "gb2312"
+			charset = "GB18030"
 		}
 		decoder := mahonia.NewDecoder(charset)
 		if decoder != nil {
@@ -45,22 +43,39 @@ type Client struct {
 func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
 	seqSet := &imap.SeqSet{}
 	ch := make(chan *imap.Message, 100)
-	status, err := cli.mailBox.Select("INBOX", false)
-	if err != nil || status.UnseenSeqNum == 0 {
+	status := cli.mailBox.Mailbox()
+	if status == nil {
+		_, err := cli.mailBox.Select("INBOX", false)
+		if err != nil {
+			log.Println(err)
+			close(ch)
+			return ch, nil
+		}
+	}
+	seqids, err := cli.SearchUnseen()
+	if err != nil {
+		log.Println(err)
+		close(ch)
+		return ch, nil
+	}
+	if len(seqids) == 0 {
 		log.Println("没有邮件")
 		close(ch)
-		return ch, seqSet
+		return ch, nil
 	}
-	if status.Unseen == 0 {
-		status.Unseen = 1
-	}
-	log.Printf("msg: %+v \n", status) //todo search
-	seqSet.AddRange(status.UnseenSeqNum, status.UnseenSeqNum+status.Unseen-1)
+	seqSet.AddNum(seqids...)
 	go func() {
 		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]", imap.FetchFlags, imap.FetchUid}, ch)
 	}()
 
 	return ch, seqSet
+}
+
+func (cli *Client) SearchUnseen() (ids []uint32, err error) {
+	criteria := imap.NewSearchCriteria()
+	criteria.WithoutFlags = []string{imap.SeenFlag}
+	ids, err = cli.mailBox.Search(criteria)
+	return
 }
 
 func (cli *Client) See(seqSet *imap.SeqSet) {
@@ -85,6 +100,10 @@ func (cli *Client) unSubscribe(conn *MailConn) {
 
 func (cli *Client) Login() (err error) {
 	err = cli.mailBox.Login(cli.User, cli.Password)
+	if err != nil {
+		_, _ = cli.mailBox.Select("INBOX", false)
+	}
+
 	return
 }
 
@@ -94,6 +113,7 @@ func (cli *Client) Reconnect() (err error) {
 		return
 	}
 	err = cli.mailBox.Login(cli.User, cli.Password)
+	_, _ = cli.mailBox.Select("INBOX", false)
 	return
 }
 
