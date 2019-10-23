@@ -5,12 +5,17 @@ package response;
 message Mail {
     string messageId = 1; // Unique ID number for this person.
     string subject = 2;
-    repeated string to = 3;
-    repeated string from = 4;
+    repeated Address to = 3;
+    repeated Address from = 4;
     repeated Body text = 5;
     Body attachment = 6;
 }
 message Body {
     string contentType = 1;
     bytes mainBody = 2;
+}
+
+message Address {
+    string name = 1;
+    string address = 2;
 }

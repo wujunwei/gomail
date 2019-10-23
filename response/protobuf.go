@@ -13,7 +13,6 @@ func ConstructMsg(mr *mail.Reader) ([]byte, error) {
 	subject, _ := header.Subject()
 	toAddress, _ := header.AddressList("To")
 	fromAddress, _ := header.AddressList("From")
-	log.Println(header.Get("Date"), subject, toAddress, fromAddress)
 	var attachBody *Body
 	var text []*Body
 	for {
@@ -47,10 +46,13 @@ func ConstructMsg(mr *mail.Reader) ([]byte, error) {
 	return proto.Marshal(msgStruct)
 }
 
-func changeAddress2str(addresses []*mail.Address) (to []string) {
-	to = make([]string, len(addresses))
+func changeAddress2str(addresses []*mail.Address) (to []*Address) {
+	to = make([]*Address, len(addresses))
 	for key, address := range addresses {
-		to[key] = address.String()
+		to[key] = &Address{
+			Name:    address.Name,
+			Address: address.Address,
+		}
 	}
 	return
 }
