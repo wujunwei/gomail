@@ -84,7 +84,7 @@ out:
 		select {
 		case msg := <-conn.msgChan:
 			{
-				conn.Done <- conn.Write(msg)
+				go func() { conn.Done <- conn.Write(msg) }()
 			}
 		case err := <-conn.Done:
 			{

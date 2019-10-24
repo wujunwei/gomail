@@ -11,6 +11,7 @@ import (
 func ConstructMsg(mr *mail.Reader) ([]byte, error) {
 	header := mr.Header
 	subject, _ := header.Subject()
+	log.Println(subject)
 	toAddress, _ := header.AddressList("To")
 	fromAddress, _ := header.AddressList("From")
 	var attachBody *Body

@@ -73,9 +73,11 @@ func (postman *Postman) StartToFetch() {
 				case <-ticker:
 					mailChan, seqSet := client.Fetch()
 					for msg := range mailChan {
-						postman.openMessage(msg)
+						message := postman.openMessage(msg)
+						log.Println("start to push msg , subscribers :", len(client.subscribers))
 						for _, listener := range client.subscribers {
-							listener <- postman.openMessage(msg)
+							log.Println("pushing !!")
+							listener <- message
 						}
 					}
 					if seqSet != nil {
@@ -87,7 +89,7 @@ func (postman *Postman) StartToFetch() {
 				case err := <-client.Done: //处理异常需开启协程
 					if err != nil {
 						log.Println("error happen:", err)
-						//err = client.Reconnect()
+						err = client.Reconnect()
 						if err != nil {
 							log.Println("retry :" + err.Error())
 						}
@@ -100,8 +102,12 @@ func (postman *Postman) StartToFetch() {
 
 func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
 	var section imap.BodySectionName
-	mr, _ := mail.CreateReader(msg.GetBody(&section))
-	res, err := response.ConstructMsg(mr)
+	mr, err := mail.CreateReader(msg.GetBody(&section))
+	if err != nil {
+		log.Println("construct message error:", err)
+		return
+	}
+	res, err = response.ConstructMsg(mr)
 	if err != nil {
 		log.Println("construct message error:", err)
 	}

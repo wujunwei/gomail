@@ -47,14 +47,16 @@ func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
 	if status == nil {
 		_, err := cli.mailBox.Select("INBOX", false)
 		if err != nil {
-			log.Println(err)
+			log.Println("select error:", err)
+			go func() { cli.Done <- err }()
 			close(ch)
 			return ch, nil
 		}
 	}
 	seqids, err := cli.SearchUnseen()
 	if err != nil {
-		log.Println(err)
+		log.Println("fetch unsee error", err)
+		go func() { cli.Done <- err }()
 		close(ch)
 		return ch, nil
 	}
