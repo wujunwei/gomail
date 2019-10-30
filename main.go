@@ -2,24 +2,21 @@ package main
 
 import (
 	"gomail/config"
-	"gomail/db"
 	"gomail/imap"
-	"gomail/smtp"
-	"log"
 )
 
 func main() {
 	mailConfig := config.Load("./config.yml")
-	mongo, err := db.New(mailConfig.Mongo)
-	if err != nil {
-		log.Fatal(err)
-	}
-	go smtp.Start(mailConfig.Smtp, mongo)
+	//mongo, err := db.New(mailConfig.Mongo)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//go smtp.Start(mailConfig.Smtp, mongo)
 	imap.StartAndListen(mailConfig.Imap)
 }
 
 //func init() {
-//	message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
+//	message.CharsetReader = func(charset strifetch unsee errorng, input io.Reader) (reader io.Reader, e error) {
 //		if strings.ToLower(charset) == "gb2312" {
 //			charset = "GB18030"
 //		}

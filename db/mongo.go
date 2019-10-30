@@ -19,11 +19,11 @@ func (client *Client) Upload(filename string, contentType string, stream multipa
 	defer func() { _ = stream.Close() }()
 	gridFS := client.DB.GridFS(client.gridPrefix)
 	file, err := gridFS.Create(filename)
-	defer func() { _ = file.Close() }()
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	defer func() { _ = file.Close() }()
 	by, err := ioutil.ReadAll(stream)
 	file.SetContentType(contentType)
 	_, err = file.Write(by)

@@ -60,14 +60,13 @@ func (mh *MailHandler) Close() {
 }
 
 func (mh *MailHandler) Serve(conn *MailConn) {
-	log.Println("one connection comes")
 	defer func() {
 		fmt.Println("close!")
 	}()
 	if !conn.accept() {
 		return
 	}
-	log.Println("accept !")
+	log.Println("new client accept !")
 	msg := make([]byte, 1024)
 	_, err := conn.Read(msg)
 	if err != nil {

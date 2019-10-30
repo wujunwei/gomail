@@ -55,6 +55,10 @@ func (postman *Postman) UnSubscribe(user string, conn *MailConn) {
 
 func (postman *Postman) addClients(accounts []config.Account) {
 	for _, account := range accounts {
+		_, ok := postman.mailPool[account.Auth.User]
+		if ok {
+			continue
+		}
 		client, err := New(account)
 		if err != nil {
 			log.Println(err)
@@ -65,7 +69,8 @@ func (postman *Postman) addClients(accounts []config.Account) {
 }
 
 func (postman *Postman) StartToFetch() {
-	for _, client := range postman.mailPool {
+	for _, cli := range postman.mailPool {
+		client := cli
 		go func() {
 			ticker := time.Tick(client.flushTime * time.Second)
 			for {
@@ -92,6 +97,9 @@ func (postman *Postman) StartToFetch() {
 						err = client.Reconnect()
 						if err != nil {
 							log.Println("retry :" + err.Error())
+							return
+						} else {
+							log.Println("retry success !")
 						}
 					}
 				}

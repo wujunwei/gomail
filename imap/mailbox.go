@@ -41,31 +41,26 @@ type Client struct {
 }
 
 func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
+	if nil != cli.mailBox.Noop() {
+		return nil, nil
+	}
 	seqSet := &imap.SeqSet{}
 	ch := make(chan *imap.Message, 100)
-	status := cli.mailBox.Mailbox()
-	if status == nil {
-		_, err := cli.mailBox.Select("INBOX", false)
-		if err != nil {
-			log.Println("select error:", err)
-			go func() { cli.Done <- err }()
-			close(ch)
-			return ch, nil
-		}
-	}
+
 	seqids, err := cli.SearchUnseen()
 	if err != nil {
-		log.Println("fetch unsee error", err)
+		log.Println(cli.User, " fetch unsee error: ", err)
 		go func() { cli.Done <- err }()
 		close(ch)
 		return ch, nil
 	}
 	if len(seqids) == 0 {
-		log.Println("没有邮件")
+		log.Println(cli.User, " 没有邮件")
 		close(ch)
 		return ch, nil
 	}
 	seqSet.AddNum(seqids...)
+
 	go func() {
 		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]", imap.FetchFlags, imap.FetchUid}, ch)
 	}()
@@ -110,7 +105,7 @@ func (cli *Client) Login() (err error) {
 }
 
 func (cli *Client) Reconnect() (err error) {
-	cli.mailBox, err = client.Dial(cli.RemoteServer)
+	cli.mailBox, err = client.DialTLS(cli.RemoteServer, nil)
 	if err != nil {
 		return
 	}
@@ -145,5 +140,6 @@ func New(imapConfig config.Account) (instance *Client, err error) {
 		subscribers:   make(map[*MailConn]chan []byte, 50),
 	}
 	err = instance.Login()
+	_, _ = instance.mailBox.Select("INBOX", false)
 	return
 }

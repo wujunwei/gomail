@@ -24,6 +24,7 @@ func main() {
 			break
 		}
 		mail := &response.Mail{}
+		rec = rec[:n]
 		err = proto.Unmarshal(rec, mail)
 		if err != nil {
 			fmt.Println(err, n)
