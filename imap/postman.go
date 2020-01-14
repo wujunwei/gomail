@@ -8,7 +8,6 @@ import (
 	"gomail/response"
 	"log"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -27,7 +26,6 @@ type Mail struct {
 
 //alive check， subscribe restart client
 type Postman struct {
-	Lock     sync.RWMutex
 	mailPool map[string]*Client
 }
 
@@ -130,7 +128,6 @@ func (postman *Postman) Close() {
 
 func NewPostMan(accounts []config.Account) (postman *Postman) {
 	postman = &Postman{
-		Lock:     sync.RWMutex{},
 		mailPool: make(map[string]*Client, len(accounts)),
 	}
 	postman.addClients(accounts)
