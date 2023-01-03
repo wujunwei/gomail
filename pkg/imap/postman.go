@@ -4,8 +4,8 @@ import (
 	"errors"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-message/mail"
-	"gomail/config"
-	"gomail/response"
+	"gomail/pkg/config"
+	"gomail/pkg/response"
 	"log"
 	"strings"
 	"time"
@@ -24,7 +24,7 @@ type Mail struct {
 	Attachment  string   `json:"id"`
 }
 
-//alive check， subscribe restart client
+// alive check， subscribe restart client
 type Postman struct {
 	mailPool map[string]*Client
 }

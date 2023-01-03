@@ -4,7 +4,6 @@ import (
 	"github.com/emersion/go-message/mail"
 	"github.com/golang/protobuf/proto"
 	"io"
-	"io/ioutil"
 	"log"
 )
 
@@ -26,13 +25,13 @@ func ConstructMsg(mr *mail.Reader) ([]byte, error) {
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
 			// This is the message's text (can be plain-text or HTML)
-			b, _ := ioutil.ReadAll(p.Body)
+			b, _ := io.ReadAll(p.Body)
 			t, _, _ := h.ContentType()
 			text = append(text, &Body{MainBody: b, ContentType: t})
 		case *mail.AttachmentHeader:
 			// This is an attachment
 			contentType, _, _ := h.ContentType()
-			b, _ := ioutil.ReadAll(p.Body)
+			b, _ := io.ReadAll(p.Body)
 			attachBody = &Body{ContentType: contentType, MainBody: b}
 		}
 	}

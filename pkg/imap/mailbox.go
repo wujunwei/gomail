@@ -2,10 +2,8 @@ package imap
 
 import (
 	"github.com/axgle/mahonia"
-	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
-	"github.com/emersion/go-message"
-	"gomail/config"
+	"gomail/pkg/config"
 	"io"
 	"log"
 	"strings"

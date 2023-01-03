@@ -6,15 +6,16 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	. "gomail/config"
-	"gomail/util"
+	. "gomail/pkg/config"
+	"gomail/pkg/util"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/smtp"
 	"strings"
 	"time"
 )
+
+const splitLine = "\r\n"
 
 type MailTask struct {
 	MessageId   string
@@ -63,24 +64,24 @@ func (mClient MailClient) generatorMessageId() string {
 func (mClient MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
 	header := ""
 	for key, value := range Header {
-		header += key + ":" + value + "\r\n"
+		header += key + ":" + value + splitLine
 	}
-	header += "\r\n"
+	header += splitLine
 	buffer.WriteString(header)
 	return header
 }
 func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
-	file, err := ioutil.ReadAll(fileName)
+	file, err := io.ReadAll(fileName)
 	if err != nil {
 		panic(err.Error())
 	}
 	payload := make([]byte, base64.StdEncoding.EncodedLen(len(file)))
 	base64.StdEncoding.Encode(payload, file)
-	buffer.WriteString("\r\n")
+	buffer.WriteString(splitLine)
 	for index, line := 0, len(payload); index < line; index++ {
 		buffer.WriteByte(payload[index])
 		if (index+1)%76 == 0 {
-			buffer.WriteString("\r\n")
+			buffer.WriteString(splitLine)
 		}
 	}
 }
@@ -103,16 +104,16 @@ func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	Header["Mime-Version"] = "1.0"
 	Header["Date"] = time.Now().String()
 	mClient.writeHeader(buffer, Header)
-	body := "\r\n--" + boundary + "\r\n"
-	body += "Content-Type:" + task.ContentType + "\r\n"
-	body += "\r\n" + task.Body + "\r\n"
+	body := splitLine + "--" + boundary + splitLine
+	body += "Content-Type:" + task.ContentType + splitLine
+	body += splitLine + task.Body + splitLine
 	buffer.WriteString(body)
 
 	if task.Attachment.WithFile {
-		attachment := "\r\n--" + boundary + "\r\n"
-		attachment += "Content-Transfer-Encoding:base64\r\n"
-		attachment += "Content-Disposition:attachment\r\n"
-		attachment += "Content-Type:" + task.Attachment.ContentType + ";name=\"" + task.Attachment.Name + "\"\r\n"
+		attachment := splitLine + "--" + boundary + splitLine
+		attachment += "Content-Transfer-Encoding:base64" + splitLine
+		attachment += "Content-Disposition:attachment" + splitLine
+		attachment += "Content-Type:" + task.Attachment.ContentType + ";name=\"" + task.Attachment.Name + "\"" + splitLine
 		buffer.WriteString(attachment)
 		defer func() {
 			if err := recover(); err != nil {
@@ -122,7 +123,7 @@ func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 		mClient.writeFile(buffer, task.Attachment.Reader)
 	}
 
-	buffer.WriteString("\r\n--" + boundary + "--")
+	buffer.WriteString(splitLine + "--" + boundary + "--")
 	return buffer
 }
 

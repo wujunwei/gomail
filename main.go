@@ -1,10 +1,10 @@
 package main
 
 import (
-	"gomail/config"
-	"gomail/db"
-	"gomail/imap"
-	"gomail/smtp"
+	"gomail/pkg/config"
+	"gomail/pkg/db"
+	"gomail/pkg/imap"
+	"gomail/pkg/smtp"
 	"log"
 )
 

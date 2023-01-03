@@ -2,10 +2,10 @@ package db
 
 import (
 	"errors"
-	"gomail/config"
+	"gomail/pkg/config"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"io/ioutil"
+	"io"
 	"log"
 	"mime/multipart"
 )
@@ -24,7 +24,7 @@ func (client *Client) Upload(filename string, contentType string, stream multipa
 		return
 	}
 	defer func() { _ = file.Close() }()
-	by, err := ioutil.ReadAll(stream)
+	by, err := io.ReadAll(stream)
 	file.SetContentType(contentType)
 	_, err = file.Write(by)
 	id = file.Id().(bson.ObjectId).Hex()

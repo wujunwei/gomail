@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"gomail/response"
+	"gomail/pkg/response"
 	"log"
 	"net"
 	"os"

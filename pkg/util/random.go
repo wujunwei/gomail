@@ -1,4 +1,4 @@
-// The util package provides cryptographically secure util integers
+// Package util  provides cryptographically secure util integers
 // and strings.
 package util
 

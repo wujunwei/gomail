@@ -1,13 +1,13 @@
 package config
 
 import (
-	"github.com/go-yaml/yaml"
-	"io/ioutil"
+	"gopkg.in/yaml.v3"
 	"log"
+	"os"
 )
 
 func Load(path string) (config Config) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)
 	}

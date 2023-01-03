@@ -1,7 +1,7 @@
 package imap
 
 import (
-	"gomail/config"
+	"gomail/pkg/config"
 	"log"
 	"net"
 	"time"

@@ -2,10 +2,10 @@ package smtp
 
 import (
 	"encoding/json"
-	"gomail/db"
-	"gomail/response"
+	"gomail/pkg/db"
+	"gomail/pkg/response"
 	"gopkg.in/mgo.v2/bson"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -26,7 +26,7 @@ func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		}
 	}()
 	writer.Header().Add("Content-Type", "application/json")
-	jsonData, _ = ioutil.ReadAll(request.Body)
+	jsonData, _ = io.ReadAll(request.Body)
 	err := json.Unmarshal(jsonData, &task)
 	if err != nil {
 		panic(err)

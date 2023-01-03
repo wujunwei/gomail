@@ -2,8 +2,8 @@ package smtp
 
 import (
 	"fmt"
-	"gomail/config"
-	"gomail/db"
+	"gomail/pkg/config"
+	"gomail/pkg/db"
 	"log"
 	"net"
 	"net/http"
