@@ -1,4 +1,4 @@
-package server
+package mailbox
 
 import (
 	"context"
@@ -21,4 +21,7 @@ func (s DefaultMailBoxServer) Upload(MailBox_UploadServer) error {
 }
 func (s DefaultMailBoxServer) Watch(*Server, MailBox_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (s DefaultMailBoxServer) mustEmbedUnimplementedMailBoxServer() {
+
 }
