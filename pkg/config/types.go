@@ -27,6 +27,7 @@ type Imap struct {
 type Account struct {
 	RemoteServer string        `yaml:"remote_server"`
 	Auth         Auth          `yaml:"auth"`
+	Name         string        `yaml:"name"`
 	Timeout      time.Duration `yaml:"timeout"`
 	FlushTime    time.Duration `yaml:"flush_time"`
 }

@@ -2,7 +2,9 @@ package imap
 
 import (
 	"github.com/axgle/mahonia"
+	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/emersion/go-message"
 	"gomail/pkg/config"
 	"io"
 	"log"
@@ -60,7 +62,10 @@ func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
 	seqSet.AddNum(seqids...)
 
 	go func() {
-		cli.Done <- cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]", imap.FetchFlags, imap.FetchUid}, ch)
+		err := cli.mailBox.Fetch(seqSet, []imap.FetchItem{imap.FetchBody + "[]", imap.FetchFlags, imap.FetchUid}, ch)
+		if err != nil {
+			cli.Done <- err
+		}
 	}()
 
 	return ch, seqSet

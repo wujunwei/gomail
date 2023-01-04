@@ -1,0 +1,56 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package grpc;
+option go_package = "./server";
+
+message Mail {
+  string MessageID = 1; // Unique ID number for this person.
+  string Subject = 2;
+  repeated Address to = 3;
+  repeated Address from = 4;
+  repeated Body text = 5;
+  Body attachment = 6;
+}
+
+message Body {
+  string contentType = 1;
+  bytes mainBody = 2;
+}
+
+message Address {
+  string name = 1;
+  string address = 2;
+}
+
+message SendMailResponse {
+  string MsgID = 1; // Unique ID number for this person.
+}
+message Server {
+  string Name = 1;
+}
+
+message UploadFile{
+  oneof File{
+    string Name = 1;
+    bytes Content = 2;
+  }
+}
+
+message UploadResponse{
+  string FileID = 1;
+}
+
+message ServerList {
+  repeated Server Items = 1;
+}
+
+service MailBox{
+  rpc Send(Mail)returns (SendMailResponse){}
+
+  rpc ListServer(google.protobuf.Empty)returns (ServerList){}
+
+  rpc Upload(stream UploadFile)returns (UploadResponse){}
+
+  rpc Watch(Server) returns (stream Mail) {}
+
+}

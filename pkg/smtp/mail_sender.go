@@ -39,9 +39,9 @@ type Attachment struct {
 }
 
 type Client interface {
-	Send(task MailTask) (ok bool, err error)
-	BuildStruct(task MailTask) *MailClient
-	writeHeader(headers []string) *MailClient
+	Send(task MailTask) (string, error)
+	BuildStruct(task MailTask) *bytes.Buffer
+	WriteHeader(io.StringWriter, map[string]string) error
 }
 
 type MailClient struct {
@@ -50,7 +50,7 @@ type MailClient struct {
 	Addr     string
 }
 
-func (mClient MailClient) generatorMessageId() string {
+func (c MailClient) generatorMessageId() string {
 	randomByte, _ := util.Alpha(uint64(32))
 	hash := sha256.New()
 	hash.Write(randomByte)
@@ -58,19 +58,19 @@ func (mClient MailClient) generatorMessageId() string {
 	randomStr = strings.ReplaceAll(randomStr, "=", "")
 	randomStr = strings.ReplaceAll(randomStr, "/", "")
 	randomStr = strings.ReplaceAll(randomStr, "+", "")
-	return fmt.Sprintf("<%s@%s>", randomStr, mClient.HostName)
+	return fmt.Sprintf("<%s@%s>", randomStr, c.HostName)
 }
 
-func (mClient MailClient) writeHeader(buffer *bytes.Buffer, Header map[string]string) string {
+func (c MailClient) WriteHeader(buffer io.StringWriter, Header map[string]string) error {
 	header := ""
 	for key, value := range Header {
 		header += key + ":" + value + splitLine
 	}
 	header += splitLine
-	buffer.WriteString(header)
-	return header
+	_, err := buffer.WriteString(header)
+	return err
 }
-func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
+func (c MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
 	file, err := io.ReadAll(fileName)
 	if err != nil {
 		panic(err.Error())
@@ -85,7 +85,7 @@ func (mClient MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
 		}
 	}
 }
-func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
+func (c MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	buffer := bytes.NewBuffer(nil)
 	boundary := "GoBoundary"
 	Header := make(map[string]string)
@@ -95,7 +95,7 @@ func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	Header["Bcc"] = strings.Join(task.Bcc, ";")
 	Header["Subject"] = task.Subject
 	if task.MessageId == "" {
-		task.MessageId = mClient.generatorMessageId()
+		task.MessageId = c.generatorMessageId()
 	}
 	Header["Message-Id"] = task.MessageId
 	Header["In-Reply-To"] = task.ReplyId
@@ -103,7 +103,7 @@ func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	Header["Content-Type"] = "multipart/mixed;boundary=" + boundary
 	Header["Mime-Version"] = "1.0"
 	Header["Date"] = time.Now().String()
-	mClient.writeHeader(buffer, Header)
+	_ = c.WriteHeader(buffer, Header)
 	body := splitLine + "--" + boundary + splitLine
 	body += "Content-Type:" + task.ContentType + splitLine
 	body += splitLine + task.Body + splitLine
@@ -120,29 +120,28 @@ func (mClient *MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 				log.Fatalln(err)
 			}
 		}()
-		mClient.writeFile(buffer, task.Attachment.Reader)
+		c.writeFile(buffer, task.Attachment.Reader)
 	}
 
 	buffer.WriteString(splitLine + "--" + boundary + "--")
 	return buffer
 }
 
-func (mClient *MailClient) Send(task MailTask) (messageId string, err error) {
+func (c MailClient) Send(task MailTask) (messageId string, err error) {
 	if task.From == "" {
 		err = errors.New("unknown json string")
 		return
 	}
-	messageId = mClient.generatorMessageId()
+	messageId = c.generatorMessageId()
 	task.MessageId = messageId
-	buffer := mClient.BuildStruct(task)
-	err = smtp.SendMail(mClient.Addr, mClient.Auth, task.From, task.To, buffer.Bytes())
+	buffer := c.BuildStruct(task)
+	err = smtp.SendMail(c.Addr, c.Auth, task.From, task.To, buffer.Bytes())
 	return
 }
 
-func NewClient(smtpConfig Smtp) (MailSender MailClient, err error) {
+func NewClient(smtpConfig Smtp) Client {
 	//auth
-	MailSender.HostName = smtpConfig.Host
-	MailSender.Addr = smtpConfig.RemoteServer
+	MailSender := MailClient{HostName: smtpConfig.Host, Addr: smtpConfig.RemoteServer}
 	MailSender.Auth = smtp.PlainAuth("", smtpConfig.User, smtpConfig.Password, strings.Split(smtpConfig.RemoteServer, ":")[0])
-	return
+	return MailSender
 }

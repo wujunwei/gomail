@@ -1,4 +1,4 @@
-package response
+package grpc
 
 import (
 	"github.com/emersion/go-message/mail"

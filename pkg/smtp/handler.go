@@ -3,7 +3,7 @@ package smtp
 import (
 	"encoding/json"
 	"gomail/pkg/db"
-	"gomail/pkg/response"
+	"gomail/pkg/grpc"
 	"gopkg.in/mgo.v2/bson"
 	"io"
 	"log"
@@ -11,7 +11,7 @@ import (
 )
 
 type MailHandle struct {
-	Client *MailClient
+	Client Client
 	Db     *db.Client
 }
 
@@ -22,7 +22,7 @@ func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		if r := recover(); r != nil {
 			log.Println(r)
 			err := r.(error)
-			_, _ = writer.Write(response.Fail(1, err.Error()))
+			_, _ = writer.Write(grpc.Fail(1, err.Error()))
 		}
 	}()
 	writer.Header().Add("Content-Type", "application/json")
@@ -45,7 +45,7 @@ func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	if err != nil {
 		panic(err)
 	}
-	_, _ = writer.Write(response.Success(MessageId))
+	_, _ = writer.Write(grpc.Success(MessageId))
 }
 
 type FileHandle struct {
@@ -64,8 +64,8 @@ func (fh *FileHandle) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 			objId, _ := fh.db.Upload(file.Filename, file.Header.Get("Content-Type"), reader)
 			result[i] = objId
 		}
-		_, _ = writer.Write(response.Success(result))
+		_, _ = writer.Write(grpc.Success(result))
 	} else {
-		_, _ = writer.Write(response.Fail(-1, "can not find 'upload'"))
+		_, _ = writer.Write(grpc.Fail(-1, "can not find 'upload'"))
 	}
 }

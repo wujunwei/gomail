@@ -5,7 +5,7 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-message/mail"
 	"gomail/pkg/config"
-	"gomail/pkg/response"
+	"gomail/pkg/grpc"
 	"log"
 	"strings"
 	"time"
@@ -24,7 +24,7 @@ type Mail struct {
 	Attachment  string   `json:"id"`
 }
 
-// alive check， subscribe restart client
+// Postman alive check， subscribe restart client
 type Postman struct {
 	mailPool map[string]*Client
 }
@@ -53,7 +53,7 @@ func (postman *Postman) UnSubscribe(user string, conn *MailConn) {
 
 func (postman *Postman) addClients(accounts []config.Account) {
 	for _, account := range accounts {
-		_, ok := postman.mailPool[account.Auth.User]
+		_, ok := postman.mailPool[account.Name]
 		if ok {
 			continue
 		}
@@ -62,7 +62,7 @@ func (postman *Postman) addClients(accounts []config.Account) {
 			log.Println(err)
 			continue
 		}
-		postman.mailPool[account.Auth.User] = client
+		postman.mailPool[account.Name] = client
 	}
 }
 
@@ -70,10 +70,11 @@ func (postman *Postman) StartToFetch() {
 	for _, cli := range postman.mailPool {
 		client := cli
 		go func() {
-			ticker := time.Tick(client.flushTime * time.Second)
+			ticker := time.NewTicker(client.flushTime * time.Second)
+			defer ticker.Stop()
 			for {
 				select {
-				case <-ticker:
+				case <-ticker.C:
 					mailChan, seqSet := client.Fetch()
 					for msg := range mailChan {
 						message := postman.openMessage(msg)
@@ -113,7 +114,7 @@ func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
 		log.Println("construct message error:", err)
 		return
 	}
-	res, err = response.ConstructMsg(mr)
+	res, err = grpc.ConstructMsg(mr)
 	if err != nil {
 		log.Println("construct message error:", err)
 	}

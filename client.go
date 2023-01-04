@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"gomail/pkg/response"
+	"gomail/pkg/grpc"
 	"log"
 	"net"
 	"os"
@@ -23,7 +23,7 @@ func main() {
 			log.Println(err, n)
 			break
 		}
-		mail := &response.Mail{}
+		mail := &grpc.Mail{}
 		rec = rec[:n]
 		err = proto.Unmarshal(rec, mail)
 		if err != nil {
