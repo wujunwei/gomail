@@ -38,19 +38,19 @@ type Attachment struct {
 	WithFile    bool `json:"with_file"`
 }
 
-type Client interface {
+type Tool interface {
 	Send(task MailTask) (string, error)
 	BuildStruct(task MailTask) *bytes.Buffer
 	WriteHeader(io.StringWriter, map[string]string) error
 }
 
-type MailClient struct {
+type MailTool struct {
 	HostName string
 	Auth     smtp.Auth
 	Addr     string
 }
 
-func (c MailClient) generatorMessageId() string {
+func (c MailTool) generatorMessageId() string {
 	randomByte, _ := util.Alpha(uint64(32))
 	hash := sha256.New()
 	hash.Write(randomByte)
@@ -61,7 +61,7 @@ func (c MailClient) generatorMessageId() string {
 	return fmt.Sprintf("<%s@%s>", randomStr, c.HostName)
 }
 
-func (c MailClient) WriteHeader(buffer io.StringWriter, Header map[string]string) error {
+func (c MailTool) WriteHeader(buffer io.StringWriter, Header map[string]string) error {
 	header := ""
 	for key, value := range Header {
 		header += key + ":" + value + splitLine
@@ -70,7 +70,7 @@ func (c MailClient) WriteHeader(buffer io.StringWriter, Header map[string]string
 	_, err := buffer.WriteString(header)
 	return err
 }
-func (c MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
+func (c MailTool) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
 	file, err := io.ReadAll(fileName)
 	if err != nil {
 		panic(err.Error())
@@ -85,7 +85,7 @@ func (c MailClient) writeFile(buffer *bytes.Buffer, fileName io.Reader) {
 		}
 	}
 }
-func (c MailClient) BuildStruct(task MailTask) *bytes.Buffer {
+func (c MailTool) BuildStruct(task MailTask) *bytes.Buffer {
 	buffer := bytes.NewBuffer(nil)
 	boundary := "GoBoundary"
 	Header := make(map[string]string)
@@ -127,7 +127,7 @@ func (c MailClient) BuildStruct(task MailTask) *bytes.Buffer {
 	return buffer
 }
 
-func (c MailClient) Send(task MailTask) (messageId string, err error) {
+func (c MailTool) Send(task MailTask) (messageId string, err error) {
 	if task.From == "" {
 		err = errors.New("unknown json string")
 		return
@@ -139,9 +139,9 @@ func (c MailClient) Send(task MailTask) (messageId string, err error) {
 	return
 }
 
-func NewClient(smtpConfig Smtp) Client {
+func NewClient(smtpConfig Smtp) Tool {
 	//auth
-	MailSender := MailClient{HostName: smtpConfig.Host, Addr: smtpConfig.RemoteServer}
+	MailSender := MailTool{HostName: smtpConfig.Host, Addr: smtpConfig.RemoteServer}
 	MailSender.Auth = smtp.PlainAuth("", smtpConfig.User, smtpConfig.Password, strings.Split(smtpConfig.RemoteServer, ":")[0])
 	return MailSender
 }

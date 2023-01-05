@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"gomail/pkg/db"
 	"gomail/pkg/grpc"
-	"gopkg.in/mgo.v2/bson"
 	"io"
 	"log"
 	"net/http"
 )
 
 type MailHandle struct {
-	Client Client
+	Client Tool
 	Db     *db.Client
 }
 
@@ -32,7 +31,7 @@ func (mh *MailHandle) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		panic(err)
 	}
 	if task.Attachment.WithFile {
-		file, err := mh.Db.Download(bson.ObjectIdHex(task.Attachment.Id))
+		file, err := mh.Db.Download(task.Attachment.Id)
 		if err != nil {
 			panic(err)
 		}

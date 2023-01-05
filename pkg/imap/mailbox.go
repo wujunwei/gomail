@@ -29,15 +29,15 @@ func init() {
 }
 
 type Client struct {
-	flushTime     time.Duration
-	subscriberMax int
-	RemoteServer  string
-	lock          sync.Mutex
-	subscribers   map[*MailConn]chan []byte
-	User          string
-	Password      string
-	Done          chan error
-	mailBox       *client.Client
+	flushTime       time.Duration
+	subscriberLimit int
+	RemoteServer    string
+	lock            sync.Mutex
+	subscribers     map[*MailConn]chan []byte
+	User            string
+	Password        string
+	Done            chan error
+	mailBox         *client.Client
 }
 
 func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
@@ -85,7 +85,7 @@ func (cli *Client) See(seqSet *imap.SeqSet) {
 func (cli *Client) addSubscriber(conn *MailConn) bool {
 	cli.lock.Lock()
 	defer cli.lock.Unlock()
-	if len(cli.subscribers) >= cli.subscriberMax {
+	if len(cli.subscribers) >= cli.subscriberLimit {
 		return false
 	}
 	cli.subscribers[conn] = conn.msgChan
@@ -126,21 +126,21 @@ func (cli *Client) Close() {
 	cli.lock.Unlock()
 }
 
-func New(imapConfig config.Account) (instance *Client, err error) {
+func New(imapConfig config.MailServer) (instance *Client, err error) {
 	imapClient, err := client.DialTLS(imapConfig.RemoteServer, nil)
 	if err != nil {
 		return
 	}
 	imapClient.Timeout = imapConfig.Timeout * time.Second
 	instance = &Client{
-		flushTime:     imapConfig.FlushTime,
-		subscriberMax: 50,
-		mailBox:       imapClient,
-		RemoteServer:  imapConfig.RemoteServer,
-		User:          imapConfig.Auth.User,
-		Password:      imapConfig.Auth.Password,
-		Done:          make(chan error, 1),
-		subscribers:   make(map[*MailConn]chan []byte, 50),
+		flushTime:       imapConfig.FlushTime,
+		subscriberLimit: 50,
+		mailBox:         imapClient,
+		RemoteServer:    imapConfig.RemoteServer,
+		User:            imapConfig.Auth.User,
+		Password:        imapConfig.Auth.Password,
+		Done:            make(chan error, 1),
+		subscribers:     make(map[*MailConn]chan []byte, 50),
 	}
 	err = instance.Login()
 	_, _ = instance.mailBox.Select("INBOX", false)

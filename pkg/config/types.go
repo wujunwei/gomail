@@ -17,14 +17,14 @@ type Smtp struct {
 }
 
 type Imap struct {
-	Host     string        `yaml:"host"`
-	Port     string        `yaml:"port"`
-	Accounts []Account     `yaml:"account"`
-	Network  string        `yaml:"network"`
-	Timeout  time.Duration `yaml:"timeout"`
+	Host        string        `yaml:"host"`
+	Port        string        `yaml:"port"`
+	MailServers []MailServer  `yaml:"mail_servers"`
+	Network     string        `yaml:"network"`
+	Timeout     time.Duration `yaml:"timeout"`
 }
 
-type Account struct {
+type MailServer struct {
 	RemoteServer string        `yaml:"remote_server"`
 	Auth         Auth          `yaml:"auth"`
 	Name         string        `yaml:"name"`

@@ -6,8 +6,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"io"
-	"log"
-	"mime/multipart"
 )
 
 type Client struct {
@@ -15,44 +13,42 @@ type Client struct {
 	gridPrefix string
 }
 
-func (client *Client) Upload(filename string, contentType string, stream multipart.File) (id string, err error) {
+func (client *Client) Upload(filename string, contentType string, stream io.ReadCloser) (string, error) {
 	defer func() { _ = stream.Close() }()
 	gridFS := client.DB.GridFS(client.gridPrefix)
 	file, err := gridFS.Create(filename)
 	if err != nil {
-		log.Println(err)
-		return
+		return "", err
 	}
 	defer func() { _ = file.Close() }()
-	by, err := io.ReadAll(stream)
 	file.SetContentType(contentType)
-	_, err = file.Write(by)
-	id = file.Id().(bson.ObjectId).Hex()
-	return
+	_, err = io.Copy(file, stream)
+	if err != nil {
+		return "", err
+	}
+	id := file.Id().(bson.ObjectId).Hex()
+	return id, nil
 }
 
-func (client *Client) Download(id bson.ObjectId) (file *mgo.GridFile, err error) {
-	if !id.Valid() {
-		err = errors.New("invalid file id")
+func (client *Client) Download(id string) (File, error) {
+	mongoId := bson.ObjectIdHex(id)
+	if !mongoId.Valid() {
+		return nil, errors.New("invalid file id")
 	}
 	gridFS := client.DB.GridFS(client.gridPrefix)
-	file, err = gridFS.OpenId(id)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	return
+	file, err := gridFS.OpenId(mongoId)
+	return file, err
 }
 
 func (client *Client) Close() {
 	client.DB.Session.Close()
 }
 
-func New(mongoConfig config.Mongo) (client *Client, err error) {
+func New(mongoConfig config.Mongo) (Storage, error) {
 	session, err := mgo.Dial(mongoConfig.Url)
 	if err != nil {
-		return
+		return nil, err
 	}
-	client = &Client{DB: session.DB(mongoConfig.Db), gridPrefix: mongoConfig.GridPrefix}
-	return
+	client := &Client{DB: session.DB(mongoConfig.Db), gridPrefix: mongoConfig.GridPrefix}
+	return client, nil
 }

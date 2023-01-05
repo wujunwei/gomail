@@ -9,7 +9,7 @@ import (
 
 func StartAndListen(imap config.Imap) {
 
-	handler := MailHandler{postman: NewPostMan(imap.Accounts)}
+	handler := MailHandler{postman: NewPostMan(imap.MailServers)}
 	handler.PostmanStart() // 开启协程定时获取邮件数据
 	listener, err := net.Listen(imap.Network, net.JoinHostPort(imap.Host, imap.Port))
 	log.Println("start to listen ：" + imap.Host)

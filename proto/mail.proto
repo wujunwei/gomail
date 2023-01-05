@@ -32,7 +32,8 @@ message Server {
 message UploadFile{
   oneof File{
     string Name = 1;
-    bytes Content = 2;
+    string ContentType = 2;
+    bytes Content = 3;
   }
 }
 

@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-type Handler interface {
-	Serve(conn net.Conn)
-	Close()
-}
-
 type MailConn struct {
 	Conn         net.Conn
 	Done         chan error

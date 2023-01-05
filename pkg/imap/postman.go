@@ -51,7 +51,7 @@ func (postman *Postman) UnSubscribe(user string, conn *MailConn) {
 	return
 }
 
-func (postman *Postman) addClients(accounts []config.Account) {
+func (postman *Postman) addClients(accounts []config.MailServer) {
 	for _, account := range accounts {
 		_, ok := postman.mailPool[account.Name]
 		if ok {
@@ -127,7 +127,7 @@ func (postman *Postman) Close() {
 	}
 }
 
-func NewPostMan(accounts []config.Account) (postman *Postman) {
+func NewPostMan(accounts []config.MailServer) (postman *Postman) {
 	postman = &Postman{
 		mailPool: make(map[string]*Client, len(accounts)),
 	}
