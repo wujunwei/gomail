@@ -5,53 +5,43 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-message/mail"
 	"gomail/pkg/config"
-	"gomail/pkg/grpc"
+	"gomail/pkg/proto"
+	"io"
 	"log"
-	"strings"
+	"sync"
 	"time"
 )
-
-type Mail struct {
-	MessageId   string
-	From        string   `json:"from"`
-	To          []string `json:"to"`
-	Cc          []string `json:"cc"`
-	Bcc         []string `json:"bcc"`
-	Subject     string   `json:"subject"`
-	ReplyId     string   `json:"reply_id"`
-	Body        string   `json:"body"`
-	ContentType string   `json:"content_type"`
-	Attachment  string   `json:"id"`
-}
 
 // Postman alive check， subscribe restart client
 type Postman struct {
 	mailPool map[string]*Client
+	lock     *sync.Mutex
 }
 
-func (postman *Postman) Subscribe(user, password string, conn *MailConn) (err error) {
-	chooseBox, ok := postman.mailPool[user]
-	if !ok || strings.Trim(password, "\000") != chooseBox.Password {
-		err = errors.New("user is not exist ot password invalid")
-		return
+func (postman *Postman) Subscribe(serverName, id string, ch chan *proto.Mail) error {
+	chooseBox, ok := postman.mailPool[serverName]
+	if !ok {
+		return errors.New("server is invalid")
 	}
-	if !chooseBox.addSubscriber(conn) {
-		err = errors.New("up to the max subscribe client")
+	if !chooseBox.addSubscriber(id, ch) {
+		return errors.New("up to the max subscribe client")
 	}
-	log.Println(user + " 订阅成功")
-	return
+	log.Println(serverName + " subscribe successfully")
+	return nil
 }
 
-func (postman *Postman) UnSubscribe(user string, conn *MailConn) {
-	chooseBox, ok := postman.mailPool[user]
+func (postman *Postman) UnSubscribe(serverName, id string) {
+	chooseBox, ok := postman.mailPool[serverName]
 	if !ok {
 		return
 	}
-	chooseBox.unSubscribe(conn)
+	chooseBox.unSubscribe(id)
 	return
 }
 
 func (postman *Postman) addClients(accounts []config.MailServer) {
+	postman.lock.Lock()
+	defer postman.lock.Unlock()
 	for _, account := range accounts {
 		_, ok := postman.mailPool[account.Name]
 		if ok {
@@ -66,7 +56,7 @@ func (postman *Postman) addClients(accounts []config.MailServer) {
 	}
 }
 
-func (postman *Postman) StartToFetch() {
+func (postman *Postman) Start() {
 	for _, cli := range postman.mailPool {
 		client := cli
 		go func() {
@@ -77,7 +67,11 @@ func (postman *Postman) StartToFetch() {
 				case <-ticker.C:
 					mailChan, seqSet := client.Fetch()
 					for msg := range mailChan {
-						message := postman.openMessage(msg)
+						message, err := postman.openMessage(msg)
+						if err != nil {
+							log.Printf("open message: %s", err)
+							continue
+						}
 						log.Println("start to push msg , subscribers :", len(client.subscribers))
 						for _, listener := range client.subscribers {
 							log.Println("pushing !!")
@@ -87,7 +81,7 @@ func (postman *Postman) StartToFetch() {
 					if seqSet != nil {
 						log.Println("start to see")
 						go client.See(seqSet)
-						log.Println("see!")
+						log.Println("saw !")
 					}
 
 				case err := <-client.Done: //处理异常需开启协程
@@ -107,16 +101,75 @@ func (postman *Postman) StartToFetch() {
 	}
 }
 
-func (postman *Postman) openMessage(msg *imap.Message) (res []byte) {
+func (postman *Postman) ListServer() []string {
+	server := make([]string, len(postman.mailPool))
+	i := 0
+	for s := range postman.mailPool {
+		server[i] = s
+		i++
+	}
+	return server
+}
+
+func (postman *Postman) openMessage(msg *imap.Message) (*proto.Mail, error) {
 	var section imap.BodySectionName
 	mr, err := mail.CreateReader(msg.GetBody(&section))
 	if err != nil {
 		log.Println("construct message error:", err)
-		return
+		return nil, err
 	}
-	res, err = grpc.ConstructMsg(mr)
-	if err != nil {
-		log.Println("construct message error:", err)
+	email := postman.parseMsg(mr)
+	return email, nil
+}
+func (postman *Postman) parseMsg(mr *mail.Reader) *proto.Mail {
+	header := mr.Header
+	subject, _ := header.Subject()
+	log.Println(subject)
+	toAddress, _ := header.AddressList("To")
+	fromAddress, _ := header.AddressList("From")
+	var attachBody *proto.Body
+	var text []*proto.Body
+	for {
+		p, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
+		switch h := p.Header.(type) {
+		case *mail.InlineHeader:
+			// This is the message's text (can be plain-text or HTML)
+			b, _ := io.ReadAll(p.Body)
+			t, _, _ := h.ContentType()
+			text = append(text, &proto.Body{MainBody: b, ContentType: t})
+		case *mail.AttachmentHeader:
+			// This is an attachment
+			contentType, _, _ := h.ContentType()
+			b, _ := io.ReadAll(p.Body)
+			attachBody = &proto.Body{ContentType: contentType, MainBody: b}
+		}
+	}
+	msgStruct := &proto.Mail{
+		MessageID: header.Get("Message-Id"),
+		Subject:   subject,
+		To:        changeAddress2str(toAddress),
+		//From:       changeAddress2str(fromAddress),
+		Text:       text,
+		Attachment: attachBody,
+	}
+	if len(fromAddress) > 0 {
+		msgStruct.From = &proto.Address{Name: fromAddress[0].Name, Address: fromAddress[0].Address}
+	}
+	return msgStruct
+}
+
+func changeAddress2str(addresses []*mail.Address) (to []*proto.Address) {
+	to = make([]*proto.Address, len(addresses))
+	for key, address := range addresses {
+		to[key] = &proto.Address{
+			Name:    address.Name,
+			Address: address.Address,
+		}
 	}
 	return
 }
@@ -127,10 +180,11 @@ func (postman *Postman) Close() {
 	}
 }
 
-func NewPostMan(accounts []config.MailServer) (postman *Postman) {
-	postman = &Postman{
+func NewPostMan(accounts []config.MailServer) Watcher {
+	postman := &Postman{
 		mailPool: make(map[string]*Client, len(accounts)),
+		lock:     &sync.Mutex{},
 	}
 	postman.addClients(accounts)
-	return
+	return postman
 }

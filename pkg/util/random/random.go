@@ -1,6 +1,6 @@
-// Package util  provides cryptographically secure util integers
+// Package random  provides cryptographically secure util integers
 // and strings.
-package util
+package random
 
 import (
 	"crypto/rand"

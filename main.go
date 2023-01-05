@@ -5,6 +5,8 @@ import (
 	"gomail/pkg/db"
 	"gomail/pkg/imap"
 	"gomail/pkg/mailbox"
+	"gomail/pkg/proto"
+	"gomail/pkg/smtp"
 	"log"
 	"os"
 	"os/signal"
@@ -18,11 +20,12 @@ func main() {
 		log.Fatal(err)
 	}
 	s := mailbox.NewGRPCServer()
+	smtpClient := smtp.NewClient(mailConfig.Smtp)
 	postman := imap.NewPostMan(mailConfig.Imap.MailServers)
-	postman.StartToFetch()
-	mb := mailbox.NewMailBoxService(postman, storage)
-	mailbox.RegisterMailBoxServer(s, mb)
-	sigs := make(chan os.Signal)
+	postman.Start()
+	mb := mailbox.NewMailBoxService(postman, smtpClient, storage)
+	proto.RegisterMailBoxServer(s, mb)
+	sigs := make(chan os.Signal, 2)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-sigs:

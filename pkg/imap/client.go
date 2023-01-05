@@ -6,8 +6,10 @@ import (
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message"
 	"gomail/pkg/config"
+	"gomail/pkg/proto"
 	"io"
 	"log"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -28,12 +30,21 @@ func init() {
 	}
 }
 
+type Watcher interface {
+	Subscribe(serverName, id string, ch chan *proto.Mail) error
+	UnSubscribe(serverName, id string)
+	Start()
+	Close()
+	ListServer() []string
+}
+
 type Client struct {
 	flushTime       time.Duration
 	subscriberLimit int
-	RemoteServer    string
+	Host            string
+	Port            string
 	lock            sync.Mutex
-	subscribers     map[*MailConn]chan []byte
+	subscribers     map[string]chan *proto.Mail
 	User            string
 	Password        string
 	Done            chan error
@@ -82,19 +93,19 @@ func (cli *Client) See(seqSet *imap.SeqSet) {
 	cli.Done <- cli.mailBox.Store(seqSet, imap.AddFlags, []interface{}{imap.SeenFlag}, nil)
 }
 
-func (cli *Client) addSubscriber(conn *MailConn) bool {
+func (cli *Client) addSubscriber(id string, ch chan *proto.Mail) bool {
 	cli.lock.Lock()
 	defer cli.lock.Unlock()
 	if len(cli.subscribers) >= cli.subscriberLimit {
 		return false
 	}
-	cli.subscribers[conn] = conn.msgChan
+	cli.subscribers[id] = ch
 	return true
 }
 
-func (cli *Client) unSubscribe(conn *MailConn) {
+func (cli *Client) unSubscribe(id string) {
 	cli.lock.Lock()
-	delete(cli.subscribers, conn)
+	delete(cli.subscribers, id)
 	cli.lock.Unlock()
 }
 
@@ -108,7 +119,7 @@ func (cli *Client) Login() (err error) {
 }
 
 func (cli *Client) Reconnect() (err error) {
-	cli.mailBox, err = client.DialTLS(cli.RemoteServer, nil)
+	cli.mailBox, err = client.DialTLS(net.JoinHostPort(cli.Host, cli.Port), nil)
 	if err != nil {
 		return
 	}
@@ -120,14 +131,12 @@ func (cli *Client) Reconnect() (err error) {
 func (cli *Client) Close() {
 	cli.lock.Lock()
 	_ = cli.mailBox.Close()
-	for _, sub := range cli.subscribers {
-		close(sub)
-	}
 	cli.lock.Unlock()
 }
 
 func New(imapConfig config.MailServer) (instance *Client, err error) {
-	imapClient, err := client.DialTLS(imapConfig.RemoteServer, nil)
+	remote := net.JoinHostPort(imapConfig.Host, imapConfig.Port)
+	imapClient, err := client.DialTLS(remote, nil)
 	if err != nil {
 		return
 	}
@@ -136,11 +145,12 @@ func New(imapConfig config.MailServer) (instance *Client, err error) {
 		flushTime:       imapConfig.FlushTime,
 		subscriberLimit: 50,
 		mailBox:         imapClient,
-		RemoteServer:    imapConfig.RemoteServer,
+		Host:            imapConfig.Host,
+		Port:            imapConfig.Port,
 		User:            imapConfig.Auth.User,
 		Password:        imapConfig.Auth.Password,
 		Done:            make(chan error, 1),
-		subscribers:     make(map[*MailConn]chan []byte, 50),
+		subscribers:     make(map[string]chan *proto.Mail, 50),
 	}
 	err = instance.Login()
 	_, _ = instance.mailBox.Select("INBOX", false)

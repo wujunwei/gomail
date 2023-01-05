@@ -1,15 +1,30 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
-package mailbox;
-option go_package = "./mailbox";
+package proto;
+option go_package = "./proto";
 
 message Mail {
   string MessageID = 1; // Unique ID number for this person.
   string Subject = 2;
-  repeated Address to = 3;
-  repeated Address from = 4;
-  repeated Body text = 5;
-  Body attachment = 6;
+  repeated Address To = 3;
+  Address From = 4;
+  repeated Body Text = 5;
+  Body Attachment = 6;
+}
+message MailTask{
+  Address From = 1;
+  repeated Address To = 2;
+  repeated Address Cc = 3;
+  repeated Address Bcc = 4;
+  string Subject = 5;
+  string ReplyId = 6;
+  Body Text = 7;
+  AttachmentRequest  Attachment = 8;
+}
+
+message AttachmentRequest{
+  bool WithAttachment = 1;
+  string AttachmentID = 2;
 }
 
 message Body {
@@ -46,7 +61,7 @@ message ServerList {
 }
 
 service MailBox{
-  rpc Send(Mail)returns (SendMailResponse){}
+  rpc Send(MailTask)returns (SendMailResponse){}
 
   rpc ListServer(google.protobuf.Empty)returns (ServerList){}
 

@@ -9,27 +9,25 @@ type Mongo struct {
 }
 
 type Smtp struct {
-	RemoteServer string `yaml:"remote_server"`
-	User         string `yaml:"user"`
-	Password     string `yaml:"pwd"`
-	Host         string `yaml:"host"`
-	Port         string `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"pwd"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
 }
 
 type Imap struct {
-	Host        string        `yaml:"host"`
-	Port        string        `yaml:"port"`
 	MailServers []MailServer  `yaml:"mail_servers"`
 	Network     string        `yaml:"network"`
 	Timeout     time.Duration `yaml:"timeout"`
 }
 
 type MailServer struct {
-	RemoteServer string        `yaml:"remote_server"`
-	Auth         Auth          `yaml:"auth"`
-	Name         string        `yaml:"name"`
-	Timeout      time.Duration `yaml:"timeout"`
-	FlushTime    time.Duration `yaml:"flush_time"`
+	Host      string        `yaml:"host"`
+	Port      string        `yaml:"port"`
+	Auth      Auth          `yaml:"auth"`
+	Name      string        `yaml:"name"`
+	Timeout   time.Duration `yaml:"timeout"`
+	FlushTime time.Duration `yaml:"flush_time"`
 }
 type Auth struct {
 	User     string `yaml:"user"`
