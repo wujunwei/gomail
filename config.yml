@@ -1,4 +1,5 @@
 name: Developer Setup
+port: 8080
 smtp:
   host: smtp.qq.com
   port: 587
@@ -6,15 +7,15 @@ smtp:
   pwd: 
 imap:
   network: tcp
-  timeout: 10
+  timeout: 10m
   account:
     - host: imap.qq.com
       port: 993
       auth:
         user: 
         pwd: 
-      timeout: 0
-      flush_time: 10
+      timeout: 0s
+      flush_time: 10s
 mongo:
   url: mongodb://127.0.0.1:27017
   db: mail_go

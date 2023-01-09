@@ -38,5 +38,7 @@ type Config struct {
 	Smtp  Smtp   `yaml:"smtp"`
 	Imap  Imap   `yaml:"imap"`
 	Name  string `yaml:"name"`
+	Host  string `yaml:"host"`
+	Port  int    `yaml:"port"`
 	Mongo Mongo  `yaml:"mongo"`
 }
