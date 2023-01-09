@@ -45,11 +45,9 @@ message Server {
 }
 
 message UploadFile{
-  oneof File{
     string Name = 1;
     string ContentType = 2;
     bytes Content = 3;
-  }
 }
 
 message UploadResponse{

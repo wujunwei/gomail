@@ -23,7 +23,6 @@ type DefaultMailBoxService struct {
 
 func (s *DefaultMailBoxService) Send(_ context.Context, t *proto.MailTask) (*proto.SendMailResponse, error) {
 	task := smtp.MailTask{
-		MessageId:   "",
 		From:        AddressString(t.From),
 		To:          AddressStrings(t.To),
 		Cc:          AddressStrings(t.Cc),
@@ -61,38 +60,33 @@ func (s *DefaultMailBoxService) Upload(us proto.MailBox_UploadServer) error {
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "error happen %v", err)
 	}
-	IDChan := make(chan string)
-	errChan := make(chan error)
+	errChan := make(chan error, 1)
+	defer close(errChan)
 	pr, pw := io.Pipe()
 	go func() {
-		id, err := s.Registry.Upload(uf.GetName(), uf.GetContentType(), pr)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		IDChan <- id
-	}()
-	//todo use io.pipe to upload async
-	for {
-		uf, err := us.Recv()
-		if err != nil {
-			if err == io.EOF {
-				_ = pw.Close()
-				break
+		defer func() { _ = pw.Close() }()
+		for {
+			uf, err := us.Recv()
+			if err != nil {
+				errChan <- err
+				return
 			}
-			return status.Errorf(codes.InvalidArgument, "error happen %v", err)
+			_, err = pw.Write(uf.GetContent())
+			if err != nil {
+				errChan <- err
+				return
+			}
 		}
-		_, err = pw.Write(uf.GetContent())
-		if err != nil {
-			return status.Errorf(codes.Internal, "error happen %v", err)
-		}
-	}
-	select {
-	case err := <-errChan:
+	}()
+	id, err := s.Registry.Upload(uf.GetName(), uf.GetContentType(), pr)
+	if err != nil {
 		return err
-	case id := <-IDChan:
-		return us.SendAndClose(&proto.UploadResponse{FileID: id})
 	}
+	err = <-errChan
+	if err != nil {
+		return err
+	}
+	return us.SendAndClose(&proto.UploadResponse{FileID: id})
 }
 func (s *DefaultMailBoxService) Watch(ser *proto.Server, ws proto.MailBox_WatchServer) error {
 	done := make(chan error)
