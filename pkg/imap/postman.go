@@ -58,8 +58,7 @@ func (postman *Postman) addClients(accounts []config.MailServer) {
 
 func (postman *Postman) Start() {
 	for _, cli := range postman.mailPool {
-		client := cli
-		go func() {
+		go func(client *Client) {
 			ticker := time.NewTicker(client.flushTime * time.Second)
 			defer ticker.Stop()
 			for {
@@ -74,7 +73,7 @@ func (postman *Postman) Start() {
 						}
 						log.Println("start to push msg , subscribers :", len(client.subscribers))
 						for _, listener := range client.subscribers {
-							log.Println("pushing !!")
+							log.Println("pushing message !!")
 							listener <- message
 						}
 					}
@@ -97,7 +96,7 @@ func (postman *Postman) Start() {
 					}
 				}
 			}
-		}()
+		}(cli)
 	}
 }
 

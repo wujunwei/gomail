@@ -52,7 +52,8 @@ type Client struct {
 }
 
 func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
-	if nil != cli.mailBox.Noop() {
+	if err := cli.mailBox.Noop(); err != nil {
+		cli.Done <- err
 		return nil, nil
 	}
 	seqSet := &imap.SeqSet{}
@@ -61,7 +62,7 @@ func (cli *Client) Fetch() (chan *imap.Message, *imap.SeqSet) {
 	seqids, err := cli.SearchUnseen()
 	if err != nil {
 		log.Println(cli.User, " fetch unsee error: ", err)
-		go func() { cli.Done <- err }()
+		cli.Done <- err
 		close(ch)
 		return ch, nil
 	}
@@ -149,7 +150,7 @@ func New(imapConfig config.MailServer) (instance *Client, err error) {
 		Port:            imapConfig.Port,
 		User:            imapConfig.Auth.User,
 		Password:        imapConfig.Auth.Password,
-		Done:            make(chan error, 1),
+		Done:            make(chan error, 10),
 		subscribers:     make(map[string]chan *proto.Mail, 50),
 	}
 	err = instance.Login()

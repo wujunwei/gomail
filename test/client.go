@@ -15,7 +15,7 @@ func main() {
 		fmt.Print(err)
 		os.Exit(0)
 	}
-	_, _ = conn.Write([]byte("1262193323@qq.com:kwjklcboqznsbabc"))
+	_, _ = conn.Write([]byte(""))
 	rec := make([]byte, 100000)
 	for {
 		n, err := conn.Read(rec)
