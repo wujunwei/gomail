@@ -1,19 +1,19 @@
 name: Developer Setup
-port: 8080
+port: 5000
 smtp:
   host: smtp.qq.com
   port: 587
-  user: 
-  pwd: 
+  user:
+  pwd:
 imap:
   network: tcp
   timeout: 10m
-  account:
+  mailServers:
     - host: imap.qq.com
       port: 993
       auth:
-        user: 
-        pwd: 
+        user:
+        pwd:
       timeout: 0s
       flush_time: 10s
 mongo:

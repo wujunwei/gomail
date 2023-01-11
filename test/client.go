@@ -1,38 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	proto2 "gomail/pkg/proto"
-	"log"
-	"net"
-	"os"
+	"github.com/golang/protobuf/ptypes/empty"
+	"gomail/pkg/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := grpc.Dial("localhost:5000", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Print(err)
-		os.Exit(0)
+		panic(err)
 	}
-	_, _ = conn.Write([]byte(""))
-	rec := make([]byte, 100000)
-	for {
-		n, err := conn.Read(rec)
-		if err != nil {
-			log.Println(err, n)
-			break
-		}
-		mail := &proto2.Mail{}
-		rec = rec[:n]
-		err = proto.Unmarshal(rec, mail)
-		if err != nil {
-			fmt.Println(err, n)
-			continue
-		}
-
-		fmt.Printf(" get mail: %+v \n", mail)
+	cli := proto.NewMailBoxClient(conn)
+	server, err := cli.ListServer(context.Background(), &empty.Empty{})
+	if err != nil {
+		panic(err)
 	}
-
-	_ = conn.Close()
+	fmt.Println(server.Items)
 }

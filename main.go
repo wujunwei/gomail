@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"gomail/pkg/config"
 	"gomail/pkg/db"
@@ -15,8 +16,14 @@ import (
 	"syscall"
 )
 
+var configFile string
+
+func init() {
+	flag.StringVar(&configFile, "config", "config.yaml", "path for config file")
+}
 func main() {
-	mailConfig := config.Load("./config.yml")
+	flag.Parse()
+	mailConfig := config.Load(configFile)
 	storage, err := db.New(mailConfig.Mongo)
 	if err != nil {
 		log.Fatal(err)

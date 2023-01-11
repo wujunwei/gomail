@@ -7,6 +7,6 @@ RUN go env -w GOPROXY=goproxy.io && go mod tidy \
     && CGO_ENABLED=0 go build -o ./bin/mailserver main.go
 
 FROM alpine:latest
-COPY --from=build /app/bin/mailserver  /usr/bin/mailserver
+COPY --from=build /app/bin/mailserver  /app/mailserver
 
-CMD ["/app/bin/mailserver"]
+CMD ["/app/mailserver", "--config", "/app/config.yaml"]

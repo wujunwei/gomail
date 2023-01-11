@@ -1,11 +1,22 @@
-version: '3'
+version: '3.9'
 services:
   web:
-    build: .
+    network_mode: "host"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/wujunwei/gomail:1.0
     ports:
       - "5000:5000"
-
+    configs:
+      - source: my_config
+        target: /app/config.yaml
+        mode: 0440
   mongo:
+    network_mode: "host"
     image: "mongo:4.2"
     ports:
       - "27017:27017"
+configs:
+  my_config:
+    file: ./config.yaml

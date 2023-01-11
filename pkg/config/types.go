@@ -16,7 +16,7 @@ type Smtp struct {
 }
 
 type Imap struct {
-	MailServers []MailServer  `yaml:"mail_servers"`
+	MailServers []MailServer  `yaml:"mailServers"`
 	Network     string        `yaml:"network"`
 	Timeout     time.Duration `yaml:"timeout"`
 }
