@@ -11,6 +11,8 @@ message Mail {
   repeated Body Text = 5;
   Body Attachment = 6;
 }
+
+
 message MailTask{
   Address From = 1;
   repeated Address To = 2;
@@ -54,6 +56,16 @@ message UploadResponse{
   string FileID = 1;
 }
 
+message User{
+  string Name = 1;
+  string Password = 2;
+}
+
+message UserResponse{
+  string ID = 1;
+  string Name = 2;
+}
+
 message ServerList {
   repeated Server Items = 1;
 }
@@ -66,5 +78,7 @@ service MailBox{
   rpc Upload(stream UploadFile)returns (UploadResponse){}
 
   rpc Watch(Server) returns (stream Mail) {}
+
+  rpc Register(User) returns (UserResponse) {}
 
 }

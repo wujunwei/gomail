@@ -14,7 +14,7 @@ services:
         mode: 0440
   mongo:
     network_mode: "host"
-    image: "mongo:4.2"
+    image: "mongo:6.0.3"
     ports:
       - "27017:27017"
 configs:

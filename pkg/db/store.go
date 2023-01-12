@@ -8,6 +8,9 @@ import (
 type Storage interface {
 	Upload(filename string, contentType string, stream io.ReadCloser) (id string, err error)
 	Download(id string) (File, error)
+	Set(obj interface{}) (string, error)
+	Get(condition map[string]interface{}, result interface{}) error
+	Exist(condition map[string]interface{}) bool
 }
 
 type File interface {

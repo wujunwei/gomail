@@ -23,6 +23,7 @@ type MailBoxClient interface {
 	ListServer(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServerList, error)
 	Upload(ctx context.Context, opts ...grpc.CallOption) (MailBox_UploadClient, error)
 	Watch(ctx context.Context, in *Server, opts ...grpc.CallOption) (MailBox_WatchClient, error)
+	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error)
 }
 
 type mailBoxClient struct {
@@ -117,6 +118,15 @@ func (x *mailBoxWatchClient) Recv() (*Mail, error) {
 	return m, nil
 }
 
+func (c *mailBoxClient) Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, "/proto.MailBox/Register", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MailBoxServer is the server API for MailBox service.
 // All implementations must embed UnimplementedMailBoxServer
 // for forward compatibility
@@ -125,6 +135,7 @@ type MailBoxServer interface {
 	ListServer(context.Context, *empty.Empty) (*ServerList, error)
 	Upload(MailBox_UploadServer) error
 	Watch(*Server, MailBox_WatchServer) error
+	Register(context.Context, *User) (*UserResponse, error)
 	mustEmbedUnimplementedMailBoxServer()
 }
 
@@ -143,6 +154,9 @@ func (UnimplementedMailBoxServer) Upload(MailBox_UploadServer) error {
 }
 func (UnimplementedMailBoxServer) Watch(*Server, MailBox_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedMailBoxServer) Register(context.Context, *User) (*UserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedMailBoxServer) mustEmbedUnimplementedMailBoxServer() {}
 
@@ -240,6 +254,24 @@ func (x *mailBoxWatchServer) Send(m *Mail) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _MailBox_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MailBoxServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.MailBox/Register",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MailBoxServer).Register(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MailBox_ServiceDesc is the grpc.ServiceDesc for MailBox service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -254,6 +286,10 @@ var MailBox_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListServer",
 			Handler:    _MailBox_ListServer_Handler,
+		},
+		{
+			MethodName: "Register",
+			Handler:    _MailBox_Register_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

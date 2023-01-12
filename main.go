@@ -9,6 +9,7 @@ import (
 	"gomail/pkg/mailbox"
 	"gomail/pkg/proto"
 	"gomail/pkg/smtp"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
@@ -28,7 +29,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := mailbox.NewGRPCServer()
+	interceptor := mailbox.NewAuthInterceptor(storage)
+	s := mailbox.NewGRPCServer(grpc.StreamInterceptor(interceptor.StreamAuth),
+		grpc.UnaryInterceptor(interceptor.UnaryAuth))
 	smtpClient := smtp.NewClient(mailConfig.Smtp)
 	postman := imap.NewPostMan(mailConfig.Imap.MailServers)
 	postman.Start()

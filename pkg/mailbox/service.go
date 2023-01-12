@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	"io"
 	"log"
+	"sync"
 )
 
 type DefaultMailBoxService struct {
@@ -19,6 +20,7 @@ type DefaultMailBoxService struct {
 	Watcher  imap.Watcher
 	Registry db.Storage
 	Tool     smtp.Tool
+	lock     sync.Mutex
 }
 
 func (s *DefaultMailBoxService) Send(_ context.Context, t *proto.MailTask) (*proto.SendMailResponse, error) {
@@ -88,6 +90,7 @@ func (s *DefaultMailBoxService) Upload(us proto.MailBox_UploadServer) error {
 	}
 	return us.SendAndClose(&proto.UploadResponse{FileID: id})
 }
+
 func (s *DefaultMailBoxService) Watch(ser *proto.Server, ws proto.MailBox_WatchServer) error {
 	done := make(chan error)
 	msgChan := make(chan *proto.Mail, 50)
@@ -120,6 +123,27 @@ func (s *DefaultMailBoxService) Watch(ser *proto.Server, ws proto.MailBox_WatchS
 	}
 }
 
+func (s *DefaultMailBoxService) Register(_ context.Context, u *proto.User) (*proto.UserResponse, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if s.Registry.Exist(map[string]interface{}{"name": u.Name, "password": u.Password}) {
+		return nil, status.Error(codes.AlreadyExists, "user existed")
+	}
+	id, err := s.Registry.Set(&User{Password: u.Password, Name: u.Name})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error when saving user %v", err)
+	}
+	return &proto.UserResponse{
+		ID:   id,
+		Name: u.Name,
+	}, nil
+}
+
 func NewMailBoxService(watcher imap.Watcher, client smtp.Tool, storage db.Storage) *DefaultMailBoxService {
-	return &DefaultMailBoxService{Watcher: watcher, Tool: client, Registry: storage}
+	return &DefaultMailBoxService{
+		Watcher:  watcher,
+		Tool:     client,
+		Registry: storage,
+		lock:     sync.Mutex{},
+	}
 }

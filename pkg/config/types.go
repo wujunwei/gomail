@@ -5,7 +5,10 @@ import "time"
 type Mongo struct {
 	Url        string `yaml:"url"`
 	Db         string `yaml:"db"`
+	User       string `yaml:"user"`
+	Password   string `yaml:"password"`
 	GridPrefix string `yaml:"grid_prefix"`
+	Collection string `yaml:"collection"`
 }
 
 type Smtp struct {

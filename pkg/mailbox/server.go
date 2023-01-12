@@ -4,7 +4,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func NewGRPCServer() *grpc.Server {
-	s := grpc.NewServer()
+func NewGRPCServer(opts ...grpc.ServerOption) *grpc.Server {
+	s := grpc.NewServer(opts...)
+
 	return s
 }
