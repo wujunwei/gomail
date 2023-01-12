@@ -25,17 +25,17 @@ func init() {
 func main() {
 	flag.Parse()
 	mailConfig := config.Load(configFile)
-	storage, err := db.New(mailConfig.Mongo)
+	mongo, err := db.New(mailConfig.Mongo)
 	if err != nil {
 		log.Fatal(err)
 	}
-	interceptor := mailbox.NewAuthInterceptor(storage)
+	interceptor := mailbox.NewAuthInterceptor(mongo)
 	s := mailbox.NewGRPCServer(grpc.StreamInterceptor(interceptor.StreamAuth),
 		grpc.UnaryInterceptor(interceptor.UnaryAuth))
 	smtpClient := smtp.NewClient(mailConfig.Smtp)
 	postman := imap.NewPostMan(mailConfig.Imap.MailServers)
 	postman.Start()
-	mb := mailbox.NewMailBoxService(postman, smtpClient, storage)
+	mb := mailbox.NewMailBoxService(postman, smtpClient, mongo, mongo)
 	proto.RegisterMailBoxServer(s, mb)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", mailConfig.Port))
 	if err != nil {

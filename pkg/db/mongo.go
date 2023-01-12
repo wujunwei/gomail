@@ -67,7 +67,7 @@ func (client *Client) Close() {
 	client.DB.Session.Close()
 }
 
-func New(mongoConfig config.Mongo) (Storage, error) {
+func New(mongoConfig config.Mongo) (*Client, error) {
 	session, err := mgo.Dial(mongoConfig.Url)
 	if err != nil {
 		return nil, err

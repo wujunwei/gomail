@@ -19,6 +19,7 @@ type DefaultMailBoxService struct {
 	proto.UnimplementedMailBoxServer
 	Watcher  imap.Watcher
 	Registry db.Storage
+	Session  db.Session
 	Tool     smtp.Tool
 	lock     sync.Mutex
 }
@@ -126,10 +127,10 @@ func (s *DefaultMailBoxService) Watch(ser *proto.Server, ws proto.MailBox_WatchS
 func (s *DefaultMailBoxService) Register(_ context.Context, u *proto.User) (*proto.UserResponse, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if s.Registry.Exist(map[string]interface{}{"name": u.Name, "password": u.Password}) {
+	if s.Session.Exist(map[string]interface{}{"name": u.Name, "password": u.Password}) {
 		return nil, status.Error(codes.AlreadyExists, "user existed")
 	}
-	id, err := s.Registry.Set(&User{Password: u.Password, Name: u.Name})
+	id, err := s.Session.Set(&User{Password: u.Password, Name: u.Name})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error when saving user %v", err)
 	}
@@ -139,11 +140,12 @@ func (s *DefaultMailBoxService) Register(_ context.Context, u *proto.User) (*pro
 	}, nil
 }
 
-func NewMailBoxService(watcher imap.Watcher, client smtp.Tool, storage db.Storage) *DefaultMailBoxService {
+func NewMailBoxService(watcher imap.Watcher, client smtp.Tool, storage db.Storage, session db.Session) *DefaultMailBoxService {
 	return &DefaultMailBoxService{
 		Watcher:  watcher,
 		Tool:     client,
 		Registry: storage,
+		Session:  session,
 		lock:     sync.Mutex{},
 	}
 }
