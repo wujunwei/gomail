@@ -7,6 +7,7 @@ import (
 	"gomail/pkg/db"
 	"gomail/pkg/imap"
 	"gomail/pkg/mailbox"
+	"gomail/pkg/mailbox/auth"
 	"gomail/pkg/proto"
 	"gomail/pkg/smtp"
 	"google.golang.org/grpc"
@@ -29,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	interceptor := mailbox.NewAuthInterceptor(mongo)
+	interceptor := auth.NewAuthInterceptor(mongo, mongo)
 	s := mailbox.NewGRPCServer(grpc.StreamInterceptor(interceptor.StreamAuth),
 		grpc.UnaryInterceptor(interceptor.UnaryAuth))
 	smtpClient := smtp.NewClient(mailConfig.Smtp)

@@ -79,6 +79,10 @@ func New(mongoConfig config.Mongo) (*Client, error) {
 			return nil, err
 		}
 	}
-	client := &Client{DB: db, gridPrefix: mongoConfig.GridPrefix, collection: mongoConfig.Collection}
+	client := &Client{
+		DB:         db,
+		gridPrefix: mongoConfig.GridPrefix,
+		collection: mongoConfig.Collection,
+	}
 	return client, nil
 }

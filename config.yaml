@@ -3,8 +3,8 @@ port: 5000
 smtp:
   host: smtp.qq.com
   port: 587
-  user: 1262193323@qq.com
-  pwd: oqknzznnwiaahbaj
+  user:
+  pwd:
 imap:
   network: tcp
   timeout: 10m
@@ -12,8 +12,8 @@ imap:
     - host: imap.qq.com
       port: 993
       auth:
-        user: 1262193323@qq.com
-        pwd: oqknzznnwiaahbaj
+        user:
+        pwd:
       timeout: 0s
       flush_time: 10s
 mongo:

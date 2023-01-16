@@ -5,10 +5,11 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"gomail/pkg/db"
 	"gomail/pkg/imap"
+	"gomail/pkg/mailbox/auth"
 	"gomail/pkg/proto"
 	"gomail/pkg/smtp"
-	"gomail/pkg/util/random"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"io"
 	"log"
@@ -93,15 +94,28 @@ func (s *DefaultMailBoxService) Upload(us proto.MailBox_UploadServer) error {
 }
 
 func (s *DefaultMailBoxService) Watch(ser *proto.Server, ws proto.MailBox_WatchServer) error {
+	md, ok := metadata.FromIncomingContext(ws.Context())
+	if !ok {
+		return status.Error(codes.Unknown, "header not found")
+	}
+	temp := md.Get("UserID")
+	if len(temp) == 0 {
+		return status.Error(codes.Unknown, "user not found")
+	}
+	id := temp[0]
+	u := &auth.User{}
+	err := s.Session.Get(map[string]interface{}{"_id": id}, u)
+	if err != nil {
+		return err
+	}
 	done := make(chan error)
 	msgChan := make(chan *proto.Mail, 50)
-	id, _ := random.Alpha(16)
-	err := s.Watcher.Subscribe(ser.GetName(), string(id), msgChan)
+	sub, err := s.Watcher.Subscribe(ser.GetName(), id, u.Weight, msgChan)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		s.Watcher.UnSubscribe(ser.GetName(), string(id))
+		s.Watcher.UnSubscribe(sub)
 		close(msgChan)
 	}()
 	for {
@@ -130,12 +144,23 @@ func (s *DefaultMailBoxService) Register(_ context.Context, u *proto.User) (*pro
 	if s.Session.Exist(map[string]interface{}{"name": u.Name, "password": u.Password}) {
 		return nil, status.Error(codes.AlreadyExists, "user existed")
 	}
-	id, err := s.Session.Set(&User{Password: u.Password, Name: u.Name})
+	id, err := s.Session.Set(&auth.User{Password: u.Password, Name: u.Name, Weight: u.Weight})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error when saving user %v", err)
 	}
 	return &proto.UserResponse{
 		ID:   id,
+		Name: u.Name,
+	}, nil
+}
+
+func (s *DefaultMailBoxService) Login(_ context.Context, u *proto.User) (*proto.UserResponse, error) {
+	var user = &auth.User{}
+	if err := s.Session.Get(map[string]interface{}{"name": u.Name, "password": u.Password}, u); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+	return &proto.UserResponse{
+		ID:   user.ID,
 		Name: u.Name,
 	}, nil
 }

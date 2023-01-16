@@ -18,24 +18,30 @@ type Postman struct {
 	lock     *sync.Mutex
 }
 
-func (postman *Postman) Subscribe(serverName, id string, ch chan *proto.Mail) error {
+func (postman *Postman) Subscribe(serverName, id string, weight int32, ch chan *proto.Mail) (*Subscriber, error) {
 	chooseBox, ok := postman.mailPool[serverName]
 	if !ok {
-		return errors.New("server is invalid")
+		return nil, errors.New("server is invalid")
 	}
-	if !chooseBox.addSubscriber(id, ch) {
-		return errors.New("up to the max subscribe client")
+	sub := &Subscriber{
+		Weight:     weight,
+		ID:         id,
+		Channel:    ch,
+		serverName: serverName,
+	}
+	if !chooseBox.addSubscriber(sub) {
+		return nil, errors.New("up to the max subscribe client")
 	}
 	log.Println(serverName + " subscribe successfully")
-	return nil
+	return sub, nil
 }
 
-func (postman *Postman) UnSubscribe(serverName, id string) {
-	chooseBox, ok := postman.mailPool[serverName]
+func (postman *Postman) UnSubscribe(sub *Subscriber) {
+	chooseBox, ok := postman.mailPool[sub.serverName]
 	if !ok {
 		return
 	}
-	chooseBox.unSubscribe(id)
+	chooseBox.unSubscribe(sub)
 	return
 }
 
@@ -71,11 +77,11 @@ func (postman *Postman) Start() {
 							log.Printf("open message: %s", err)
 							continue
 						}
-						log.Println("start to push msg , subscribers :", len(client.subscribers))
-						for _, listener := range client.subscribers {
+						log.Println("start to push msg , subscribers :", client.subscribers.Size())
+						client.subscribers.Each(func(index int, a *Subscriber) {
 							log.Println("pushing message !!")
-							listener <- message
-						}
+							a.Channel <- message
+						})
 					}
 					if seqSet != nil {
 						log.Println("start to see")

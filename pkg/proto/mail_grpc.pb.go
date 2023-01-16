@@ -24,6 +24,7 @@ type MailBoxClient interface {
 	Upload(ctx context.Context, opts ...grpc.CallOption) (MailBox_UploadClient, error)
 	Watch(ctx context.Context, in *Server, opts ...grpc.CallOption) (MailBox_WatchClient, error)
 	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error)
+	Login(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error)
 }
 
 type mailBoxClient struct {
@@ -127,6 +128,15 @@ func (c *mailBoxClient) Register(ctx context.Context, in *User, opts ...grpc.Cal
 	return out, nil
 }
 
+func (c *mailBoxClient) Login(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, "/proto.MailBox/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MailBoxServer is the server API for MailBox service.
 // All implementations must embed UnimplementedMailBoxServer
 // for forward compatibility
@@ -136,6 +146,7 @@ type MailBoxServer interface {
 	Upload(MailBox_UploadServer) error
 	Watch(*Server, MailBox_WatchServer) error
 	Register(context.Context, *User) (*UserResponse, error)
+	Login(context.Context, *User) (*UserResponse, error)
 	mustEmbedUnimplementedMailBoxServer()
 }
 
@@ -157,6 +168,9 @@ func (UnimplementedMailBoxServer) Watch(*Server, MailBox_WatchServer) error {
 }
 func (UnimplementedMailBoxServer) Register(context.Context, *User) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedMailBoxServer) Login(context.Context, *User) (*UserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedMailBoxServer) mustEmbedUnimplementedMailBoxServer() {}
 
@@ -272,6 +286,24 @@ func _MailBox_Register_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MailBox_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MailBoxServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.MailBox/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MailBoxServer).Login(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MailBox_ServiceDesc is the grpc.ServiceDesc for MailBox service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +322,10 @@ var MailBox_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Register",
 			Handler:    _MailBox_Register_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _MailBox_Login_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

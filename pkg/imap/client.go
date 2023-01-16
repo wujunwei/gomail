@@ -7,6 +7,7 @@ import (
 	"github.com/emersion/go-message"
 	"gomail/pkg/config"
 	"gomail/pkg/proto"
+	"gomail/pkg/util/sortlist"
 	"io"
 	"log"
 	"net"
@@ -31,11 +32,28 @@ func init() {
 }
 
 type Watcher interface {
-	Subscribe(serverName, id string, ch chan *proto.Mail) error
-	UnSubscribe(serverName, id string)
+	Subscribe(serverName, id string, weight int32, ch chan *proto.Mail) (*Subscriber, error)
+	UnSubscribe(*Subscriber)
 	Start()
 	Close()
 	ListServer() []string
+}
+
+type Subscriber struct {
+	serverName string
+	Channel    chan *proto.Mail
+	Weight     int32
+	ID         string
+}
+
+func SubscriberCompare(a, b *Subscriber) int {
+	if a.Weight == b.Weight {
+		return 0
+	}
+	if a.Weight > b.Weight {
+		return 1
+	}
+	return -1
 }
 
 type Client struct {
@@ -44,7 +62,7 @@ type Client struct {
 	Host            string
 	Port            string
 	lock            sync.Mutex
-	subscribers     map[string]chan *proto.Mail
+	subscribers     sortlist.SortedList[*Subscriber]
 	User            string
 	Password        string
 	Done            chan error
@@ -94,19 +112,19 @@ func (cli *Client) See(seqSet *imap.SeqSet) {
 	cli.Done <- cli.mailBox.Store(seqSet, imap.AddFlags, []interface{}{imap.SeenFlag}, nil)
 }
 
-func (cli *Client) addSubscriber(id string, ch chan *proto.Mail) bool {
+func (cli *Client) addSubscriber(sub *Subscriber) bool {
 	cli.lock.Lock()
 	defer cli.lock.Unlock()
-	if len(cli.subscribers) >= cli.subscriberLimit {
+	if cli.subscribers.Size() >= cli.subscriberLimit {
 		return false
 	}
-	cli.subscribers[id] = ch
+	cli.subscribers.Push(sub)
 	return true
 }
 
-func (cli *Client) unSubscribe(id string) {
+func (cli *Client) unSubscribe(subscriber *Subscriber) {
 	cli.lock.Lock()
-	delete(cli.subscribers, id)
+	cli.subscribers.DeleteItem(subscriber)
 	cli.lock.Unlock()
 }
 
@@ -151,7 +169,7 @@ func New(imapConfig config.MailServer) (instance *Client, err error) {
 		User:            imapConfig.Auth.User,
 		Password:        imapConfig.Auth.Password,
 		Done:            make(chan error, 10),
-		subscribers:     make(map[string]chan *proto.Mail, 50),
+		subscribers:     sortlist.NewSortedList[*Subscriber](SubscriberCompare, 0),
 	}
 	err = instance.Login()
 	_, _ = instance.mailBox.Select("INBOX", false)

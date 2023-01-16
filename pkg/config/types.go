@@ -32,6 +32,7 @@ type MailServer struct {
 	Timeout   time.Duration `yaml:"timeout"`
 	FlushTime time.Duration `yaml:"flush_time"`
 }
+
 type Auth struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"pwd"`

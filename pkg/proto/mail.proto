@@ -47,9 +47,9 @@ message Server {
 }
 
 message UploadFile{
-    string Name = 1;
-    string ContentType = 2;
-    bytes Content = 3;
+  string Name = 1;
+  string ContentType = 2;
+  bytes Content = 3;
 }
 
 message UploadResponse{
@@ -59,6 +59,7 @@ message UploadResponse{
 message User{
   string Name = 1;
   string Password = 2;
+  int32 Weight = 3;
 }
 
 message UserResponse{
@@ -80,5 +81,7 @@ service MailBox{
   rpc Watch(Server) returns (stream Mail) {}
 
   rpc Register(User) returns (UserResponse) {}
+
+  rpc Login(User) returns (UserResponse) {}
 
 }

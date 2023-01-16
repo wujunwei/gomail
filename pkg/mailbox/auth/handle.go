@@ -1,4 +1,4 @@
-package mailbox
+package auth
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"log"
+	"strings"
 )
 
 var (
@@ -14,10 +15,10 @@ var (
 	AuthenticationUnknown  = errors.New("auth string is unknown")
 	AuthenticationFailed   = errors.New("user not found or wrong password")
 
-	WhiteList = []string{"proto.MailBox/Register"}
+	WhiteList = []string{"proto.MailBox/Register", "proto.MailBox/Login"}
 )
 
-type AuthInterceptor interface {
+type Interceptor interface {
 	StreamAuth(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error
 	UnaryAuth(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 }
@@ -30,28 +31,47 @@ func InWhiteList(url string) bool {
 	}
 	return false
 }
-func NewAuthInterceptor(storage db.Storage) AuthInterceptor {
-	return &defaultInterceptor{registry: storage}
+func NewAuthInterceptor(storage db.Storage, sess db.Session) Interceptor {
+	return &defaultInterceptor{registry: storage, sess: sess}
 }
 
 type defaultInterceptor struct {
 	registry db.Storage
+	sess     db.Session
 }
 
 type User struct {
+	ID       string `bson:"_id"`
 	Name     string `bson:"user"`
 	Password string `bson:"password"`
+	Weight   int32  `bson:"weight"`
 }
 
-func (d *defaultInterceptor) valid(token BasicToken) bool {
+func (d *defaultInterceptor) getUser(token Token) *User {
 	res := &User{}
-	err := d.registry.Get(map[string]interface{}{"name": token.User, "password": token.Password}, res)
-	if err != nil {
-		log.Printf("user:%s cannot found because error : %v", token.User, err)
-		return false
+	conditions := map[string]interface{}{}
+	switch token.Type() {
+	case BearerAuthenticationTyp:
+		conditions["_id"] = token.String()
+	case BasicAuthenticationType:
+		authStr := token.String()
+		strings.Split(authStr, passwordSeparator)
+		if len(authStr) != 2 {
+			return nil
+		}
+		conditions["user"] = authStr[0]
+		conditions["password"] = authStr[1]
+	default:
+		return nil
 	}
-	return token.User == res.Name && token.Password == res.Password
+	err := d.sess.Get(conditions, res)
+	if err != nil {
+		log.Printf("user:%s cannot found because error : %v", token, err)
+		return nil
+	}
+	return res
 }
+
 func (d *defaultInterceptor) check(ctx context.Context, method string) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok || len(md["authorization"]) == 0 || md["authorization"][0] == "" {
@@ -62,7 +82,7 @@ func (d *defaultInterceptor) check(ctx context.Context, method string) error {
 		if err != nil {
 			return err
 		}
-		if !d.valid(tk) {
+		if d.getUser(tk) == nil {
 			return AuthenticationFailed
 		}
 	}

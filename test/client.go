@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/golang/protobuf/ptypes/empty"
-	"gomail/pkg/mailbox"
+	"gomail/pkg/mailbox/auth"
 	"gomail/pkg/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -16,7 +16,7 @@ func main() {
 	password := "example_password"
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithPerRPCCredentials(oauth.TokenSource{TokenSource: mailbox.NewBasicToken(user, password)}),
+		grpc.WithPerRPCCredentials(oauth.TokenSource{TokenSource: auth.NewBasicToken(user, password)}),
 	}
 	conn, err := grpc.Dial("localhost:5000", opts...)
 	if err != nil {

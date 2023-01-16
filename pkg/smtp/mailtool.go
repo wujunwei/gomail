@@ -10,14 +10,18 @@ import (
 	"gomail/pkg/db"
 	"gomail/pkg/util/random"
 	"io"
-	"log"
 	"net"
 	"net/smtp"
 	"strings"
 	"time"
 )
 
-const splitLine = "\r\n"
+const (
+	SplitLine       = "\r\n"
+	Boundary        = "GoBoundary"
+	BoundarySign    = "--"
+	DefaultEncoding = "base64"
+)
 
 type MailTask struct {
 	MessageId   string
@@ -42,12 +46,13 @@ type Tool interface {
 }
 
 type MailTool struct {
+	buf  *bytes.Buffer
 	Host string
 	Auth smtp.Auth
 	Port string
 }
 
-func (c MailTool) generatorMessageId() string {
+func (c *MailTool) generatorMessageId() string {
 	randomByte, _ := random.Alpha(uint64(32))
 	hash := sha256.New()
 	hash.Write(randomByte)
@@ -58,33 +63,40 @@ func (c MailTool) generatorMessageId() string {
 	return fmt.Sprintf("<%s@%s>", randomStr, c.Host)
 }
 
-func (c MailTool) writeHeader(buffer io.StringWriter, Header map[string]string) error {
+func (c *MailTool) writeHeader(Header map[string]string) {
 	header := ""
 	for key, value := range Header {
-		header += key + ":" + value + splitLine
+		header += key + ":" + value + SplitLine
 	}
-	header += splitLine
-	_, err := buffer.WriteString(header)
-	return err
+	c.buf.WriteString(header)
+	c.WriteSplitLine()
 }
-func (c MailTool) writeFile(buffer *bytes.Buffer, reader io.Reader) {
+
+func (c *MailTool) writeFile(reader io.Reader) {
 	file, err := io.ReadAll(reader)
 	if err != nil {
 		panic(err.Error())
 	}
 	payload := make([]byte, base64.StdEncoding.EncodedLen(len(file)))
 	base64.StdEncoding.Encode(payload, file)
-	buffer.WriteString(splitLine)
 	for index, line := 0, len(payload); index < line; index++ {
-		buffer.WriteByte(payload[index])
+		c.buf.WriteByte(payload[index])
 		if (index+1)%76 == 0 {
-			buffer.WriteString(splitLine)
+			c.buf.WriteString(SplitLine)
 		}
 	}
 }
-func (c MailTool) build(task MailTask) *bytes.Buffer {
-	buffer := bytes.NewBuffer(nil)
-	boundary := "GoBoundary"
+
+func (c *MailTool) WriteSplitLine() {
+	c.buf.WriteString(SplitLine)
+}
+
+func (c *MailTool) WriteBody(body []byte) {
+	c.buf.WriteString(SplitLine)
+	c.buf.Write(body)
+	c.buf.WriteString(SplitLine)
+}
+func (c *MailTool) buildHeader(task MailTask) map[string]string {
 	Header := make(map[string]string)
 	Header["From"] = task.From
 	Header["To"] = strings.Join(task.To, ";")
@@ -94,35 +106,68 @@ func (c MailTool) build(task MailTask) *bytes.Buffer {
 	Header["Message-Id"] = task.MessageId
 	Header["In-Reply-To"] = task.ReplyId
 	Header["References"] = task.ReplyId
-	Header["Content-Type"] = "multipart/mixed;boundary=" + boundary
+	Header["Content-Type"] = "multipart/mixed;boundary=" + Boundary
 	Header["Mime-Version"] = "1.0"
 	Header["Date"] = time.Now().String()
-	_ = c.writeHeader(buffer, Header)
-	buffer.WriteString(splitLine + "--" + boundary + splitLine)
-	buffer.WriteString("Content-Type:" + task.ContentType + splitLine)
-	buffer.WriteString(splitLine)
-	buffer.Write(task.Body)
-	buffer.WriteString(splitLine)
-
-	if task.Attachment.WithFile {
-		attachment := splitLine + "--" + boundary + splitLine
-		attachment += "Content-Transfer-Encoding:base64" + splitLine
-		attachment += "Content-Disposition:attachment" + splitLine
-		attachment += "Content-Type:" + task.Attachment.ContentType() + ";name=\"" + task.Attachment.Name() + "\"" + splitLine
-		buffer.WriteString(attachment)
-		defer func() {
-			if err := recover(); err != nil {
-				log.Fatalln(err)
-			}
-		}()
-		c.writeFile(buffer, task.Attachment)
-	}
-
-	buffer.WriteString(splitLine + "--" + boundary + "--")
-	return buffer
+	return Header
 }
 
-func (c MailTool) Send(task MailTask) (messageId string, err error) {
+func (c *MailTool) writeContentType(contentType string) {
+	c.buf.WriteString("Content-Type:" + contentType)
+}
+
+func (c *MailTool) writeEncoding(encode string) {
+	c.buf.WriteString("Content-Transfer-Encoding:" + encode)
+}
+func (c *MailTool) writeContentDisposition() {
+	c.buf.WriteString("Content-Disposition:attachment")
+}
+
+func (c *MailTool) writeContentTypeAndName(ty, name string) {
+	c.buf.WriteString(fmt.Sprintf("Content-Type:%s;name=\"%s\"", ty, name))
+
+}
+
+func (c *MailTool) writeAttachment(att Attachment) {
+	if att.WithFile {
+		return
+	}
+	c.WriteSplitLine()
+	c.writeBoundary(false)
+	c.WriteSplitLine()
+	c.writeEncoding(DefaultEncoding)
+	c.WriteSplitLine()
+	c.writeContentDisposition()
+	c.WriteSplitLine()
+	c.writeContentTypeAndName(att.ContentType(), att.Name())
+	c.WriteSplitLine()
+	c.writeFile(att.File)
+	_ = att.Close()
+}
+func (c *MailTool) writeBoundary(end bool) {
+	if end {
+		c.buf.WriteString(BoundarySign + Boundary + BoundarySign)
+	} else {
+		c.buf.WriteString(BoundarySign + Boundary)
+	}
+}
+
+func (c *MailTool) build(task MailTask) *bytes.Buffer {
+	c.writeHeader(c.buildHeader(task))
+	c.WriteSplitLine()
+	c.writeBoundary(false)
+	c.WriteSplitLine()
+	c.writeContentType(task.ContentType)
+	c.WriteSplitLine()
+	c.WriteBody(task.Body)
+	c.WriteSplitLine()
+	c.writeAttachment(task.Attachment)
+	c.WriteSplitLine()
+	c.writeBoundary(true)
+	return c.buf
+}
+
+func (c *MailTool) Send(task MailTask) (messageId string, err error) {
 	if task.From == "" {
 		err = errors.New("unknown json string")
 		return
@@ -130,13 +175,22 @@ func (c MailTool) Send(task MailTask) (messageId string, err error) {
 	messageId = c.generatorMessageId()
 	task.MessageId = messageId
 	buffer := c.build(task)
+	c.reset()
 	err = smtp.SendMail(net.JoinHostPort(c.Host, c.Port), c.Auth, task.From, task.To, buffer.Bytes())
 	return
 }
 
+func (c *MailTool) reset() {
+	c.buf.Reset()
+}
+
 func NewClient(smtpConfig Smtp) Tool {
 	//auth
-	MailSender := MailTool{Port: smtpConfig.Port, Host: smtpConfig.Host}
-	MailSender.Auth = smtp.PlainAuth("", smtpConfig.User, smtpConfig.Password, smtpConfig.Host)
+	MailSender := &MailTool{
+		Port: smtpConfig.Port,
+		Host: smtpConfig.Host,
+		buf:  bytes.NewBuffer(nil),
+		Auth: smtp.PlainAuth("", smtpConfig.User, smtpConfig.Password, smtpConfig.Host),
+	}
 	return MailSender
 }
