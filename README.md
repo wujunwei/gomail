@@ -3,4 +3,13 @@
 ## V1.0
 
 ## a high performance  mail subscribe Component
-### auto push,auto reconnect.
+### 功能
+
+- 发送邮件
+- 回复邮件
+- 注册帐号
+- 登录
+- 上传附件
+- 订阅邮件
+- 敏感词过滤 todo
+- 
