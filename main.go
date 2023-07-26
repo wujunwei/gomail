@@ -19,9 +19,11 @@ import (
 )
 
 var configFile string
+var debug bool
 
 func init() {
 	flag.StringVar(&configFile, "config", "config.yaml", "path for config file")
+	flag.BoolVar(&debug, "debug", true, "open debug mode")
 }
 func main() {
 	flag.Parse()
