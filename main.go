@@ -55,7 +55,9 @@ func main() {
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-sigs:
+		log.Println("serer is stopping !")
 		s.GracefulStop()
 		postman.Close()
+		log.Println("bye bye !")
 	}
 }
