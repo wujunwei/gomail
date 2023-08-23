@@ -1,24 +1,24 @@
-# 基于IMAP协议的多账号邮件订阅分发系统
-## 邮件订阅系统
+# Multi-account mail subscription distribution system based on IMAP protocol
+## Email subscription system
 ## V1.0
 
 ## a high performance  mail subscribe Component
-### 功能
+### Functions
 
-- 发送邮件
-- 回复邮件
-- 注册帐号
-- 登录
-- 上传附件
-- 订阅邮件
-- 敏感词过滤 todo
+- Send Email
+- Reply to Email 
+- Register Account 
+- Login 
+- Upload Attachments 
+- Subscribe to Email 
+- Sensitive Word Filter TODO
 
 
-1）系统用户模块：
-包括用户注册，用户登录及用户权重及权限管理。
-2）邮件轮询模块：
-包括报文转换、保存订阅数据、推送订阅数据，定时轮询第三方邮件服务数据等。
-3）敏感词过滤模块：
-包括发送、订阅邮件的正文的敏感词过滤功能。
-4）邮件收发模块：
-包括imap、smtp协议解析、发送/监听邮件、上传、下载附件等。
+1）System User Module:
+Includes user registration, user login, and user authority and permission management.
+2）Email polling module：
+Including message conversion, saving subscription data, pushing subscription data, and periodically polling data from third-party email services.
+3）Sensitive word filtering module：
+Including sensitive word filtering function for sending and subscribing to email content.
+4）Mail sending and receiving module：
+Including IMAP, SMTP protocol parsing, listening for email sending, uploading, downloading attachments, etc.
