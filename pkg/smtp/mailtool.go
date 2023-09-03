@@ -41,7 +41,7 @@ type Attachment struct {
 	WithFile bool `json:"with_file"`
 }
 
-type Tool interface {
+type Sender interface {
 	Send(task MailTask) (string, error)
 }
 
@@ -167,24 +167,22 @@ func (c *MailTool) build(task MailTask) *bytes.Buffer {
 	return c.buf
 }
 
-func (c *MailTool) Send(task MailTask) (messageId string, err error) {
+func (c *MailTool) Send(task MailTask) (string, error) {
 	if task.From == "" {
-		err = errors.New("unknown json string")
-		return
+		return "", errors.New("unknown json string")
 	}
-	messageId = c.generatorMessageId()
+	messageId := c.generatorMessageId()
 	task.MessageId = messageId
 	buffer := c.build(task)
 	c.reset()
-	err = smtp.SendMail(net.JoinHostPort(c.Host, c.Port), c.Auth, task.From, task.To, buffer.Bytes())
-	return
+	return messageId, smtp.SendMail(net.JoinHostPort(c.Host, c.Port), c.Auth, task.From, task.To, buffer.Bytes())
 }
 
 func (c *MailTool) reset() {
 	c.buf.Reset()
 }
 
-func NewClient(smtpConfig Smtp) Tool {
+func NewClient(smtpConfig Smtp) Sender {
 	//auth
 	MailSender := &MailTool{
 		Port: smtpConfig.Port,

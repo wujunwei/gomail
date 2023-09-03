@@ -18,6 +18,7 @@ import (
 
 func init() {
 	message.CharsetReader = func(charset string, input io.Reader) (reader io.Reader, e error) {
+		// some mailbox receive GB18030 only
 		if strings.ToLower(charset) == "gb2312" {
 			charset = "GB18030"
 		}

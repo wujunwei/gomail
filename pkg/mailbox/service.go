@@ -21,7 +21,7 @@ type DefaultMailBoxService struct {
 	Watcher  imap.Watcher
 	Registry db.Storage
 	Session  db.Session
-	Tool     smtp.Tool
+	Tool     smtp.Sender
 	lock     sync.Mutex
 }
 
@@ -165,7 +165,7 @@ func (s *DefaultMailBoxService) Login(_ context.Context, u *proto.User) (*proto.
 	}, nil
 }
 
-func NewMailBoxService(watcher imap.Watcher, client smtp.Tool, storage db.Storage, session db.Session) *DefaultMailBoxService {
+func NewMailBoxService(watcher imap.Watcher, client smtp.Sender, storage db.Storage, session db.Session) *DefaultMailBoxService {
 	return &DefaultMailBoxService{
 		Watcher:  watcher,
 		Tool:     client,
