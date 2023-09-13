@@ -66,7 +66,7 @@ func (d *defaultInterceptor) getUser(token Token) *User {
 	}
 	err := d.sess.Get(conditions, res)
 	if err != nil {
-		log.Printf("user:%s cannot found because error : %v", token, err)
+		log.Printf("user:%s cannot found because : %v", token, err)
 		return nil
 	}
 	return res
