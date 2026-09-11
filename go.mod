@@ -7,9 +7,9 @@ require (
 	github.com/emersion/go-imap v1.2.1
 	github.com/emersion/go-message v0.16.0
 	github.com/golang/protobuf v1.5.4
-	golang.org/x/oauth2 v0.34.0
-	google.golang.org/grpc v1.79.3
-	google.golang.org/protobuf v1.36.10
+	golang.org/x/oauth2 v0.36.0
+	google.golang.org/grpc v1.83.1
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/yaml.v3 v3.0.1
 )
